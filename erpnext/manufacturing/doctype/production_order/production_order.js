@@ -276,5 +276,3 @@ cur_frm.fields_dict['project_name'].get_query = function(doc, dt, dn) {
 }
 
 
-
-

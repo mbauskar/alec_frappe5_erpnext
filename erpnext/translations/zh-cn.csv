@@ -3363,7 +3363,7 @@ DocType: Address Template,"<h4>Default Template</h4>
 {% if phone %}Phone: {{ phone }}&lt;br&gt;{% endif -%}
 {% if fax %}Fax: {{ fax }}&lt;br&gt;{% endif -%}
 {% if email_id %}Email: {{ email_id }}&lt;br&gt;{% endif -%}
-</code></pre>","<H4>默认模板</ H4> 
+</code></pre>","<H4>默认模板</ H4>
  <p> <a用途神社href=""http://jinja.pocoo.org/docs/templates/"">模板</A>和地址的所有领域（包括自定义字段如果有的话）将可</ P> 
  <前> <代码> {{address_line1}}＆LT; BR＆GT; 
  {％，如果address_line2％} {{address_line2}}＆LT; BR＆GT; { ENDIF％ - ％} 

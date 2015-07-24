@@ -234,7 +234,6 @@ def remove_against_link_from_jv(ref_type, ref_no, against_field):
 
 		frappe.msgprint(_("Journal Entries {0} are un-linked".format("\n".join(linked_jv))))
 
-
 @frappe.whitelist()
 def get_company_default(company, fieldname):
 	value = frappe.db.get_value("Company", company, fieldname)
@@ -348,6 +347,7 @@ def get_actual_expense(args):
 def get_currency_precision(currency=None):
 	if not currency:
 		currency = frappe.db.get_value("Company",
+
 			frappe.db.get_default("company"), "default_currency", cache=True)
 	currency_format = frappe.db.get_value("Currency", currency, "number_format", cache=True)
 

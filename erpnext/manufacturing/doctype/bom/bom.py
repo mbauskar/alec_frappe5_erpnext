@@ -191,7 +191,6 @@ class BOM(Document):
 	def clear_operations(self):
 		if not self.with_operations:
 			self.set('operations', [])
-
 	def validate_main_item(self):
 		""" Validate main FG item"""
 		item = self.get_item_det(self.item)

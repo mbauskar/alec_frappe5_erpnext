@@ -112,7 +112,6 @@ erpnext.stock.PurchaseReceiptController = erpnext.buying.BuyingController.extend
 
 });
 
-
 // for backward compatibility: combine new and previous states
 $.extend(cur_frm.cscript, new erpnext.stock.PurchaseReceiptController({frm: cur_frm}));
 

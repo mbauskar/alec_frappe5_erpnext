@@ -12,3 +12,8 @@ frappe.ui.form.on("Contact", "validate", function(frm) {
 			frappe.model.remove_from_locals(doctype, name);
 	});
 });
+
+
+cur_frm.fields_dict.connected_to_address.get_query = function(doc) {//Rohit
+	return {filters: { customer: doc.customer}}
+}

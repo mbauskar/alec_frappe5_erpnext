@@ -117,7 +117,6 @@ def _test_recurring_document(obj, base_doc, date_field, first_and_last_day):
 
 		next_date = get_next_date(base_doc.get(date_field), no_of_months,
 			base_doc.repeat_on_day_of_month)
-
 		manage_recurring_documents(base_doc.doctype, next_date=next_date, commit=False)
 
 		recurred_documents = frappe.db.sql("""select name from `tab%s`

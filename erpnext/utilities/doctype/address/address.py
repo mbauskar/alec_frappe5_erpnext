@@ -21,8 +21,6 @@ class Address(Document):
 			throw(_("Address Title is mandatory."))
 
 	def validate(self):
-		self.link_fields = ("customer", "supplier", "sales_partner", "lead")
-		self.link_address()
 		self.validate_primary_address()
 		self.validate_shipping_address()
 

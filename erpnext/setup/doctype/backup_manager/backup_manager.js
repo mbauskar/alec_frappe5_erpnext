@@ -40,7 +40,6 @@ $.extend(cur_frm.cscript, {
 			});
 		}
 	},
-
 	allow_gdrive_access: function() {
 		if(cur_frm.cscript.validate_send_notifications_to()) {
 			return frappe.call({
@@ -53,7 +52,6 @@ $.extend(cur_frm.cscript, {
 			});
 		}
 	},
-
 	validate_gdrive: function() {
 		return frappe.call({
 			method: "erpnext.setup.doctype.backup_manager.backup_googledrive.gdrive_callback",

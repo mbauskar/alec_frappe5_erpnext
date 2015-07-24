@@ -1,39 +1,16 @@
 from __future__ import unicode_literals
 app_name = "erpnext"
 app_title = "ERPNext"
-app_publisher = "Frappe Technologies Pvt. Ltd."
-app_description = """## ERPNext
-
-ERPNext is a fully featured ERP system designed for Small and Medium Sized
-business. ERPNext covers a wide range of features including Accounting, CRM,
-Inventory management, Selling, Purchasing, Manufacturing, Projects, HR &
-Payroll, Website, E-Commerce and much more.
-
-ERPNext is based on the Frappe Framework is highly customizable and extendable.
-You can create Custom Form, Fields, Scripts and can also create your own Apps
-to extend ERPNext functionality.
-
-ERPNext is Open Source under the GNU General Public Licence v3 and has been
-listed as one of the Best Open Source Softwares in the world by my online
-blogs.
-
-### Links
-
-- Website: [https://erpnext.com](https://erpnext.com)
-- GitHub: [https://github.com/frappe/erpnext](https://github.com/frappe/erpnext)
-- Forum: [https://discuss.erpnext.com](https://discuss.erpnext.com)
-- Frappe Framework: [https://frappe.io](https://frappe.io)
-
-"""
+app_publisher = "Frappe Technologies Pvt. Ltd. and Contributors"
+app_description = "Open Source Enterprise Resource Planning for Small and Midsized Organizations"
 app_icon = "icon-th"
 app_color = "#e74c3c"
 app_version = "5.2.1"
-github_link = "https://github.com/frappe/erpnext"
 
 error_report_email = "support@erpnext.com"
 
-app_include_js = "assets/js/erpnext.min.js"
-app_include_css = "assets/css/erpnext.css"
+app_include_js = ["assets/js/erpnext.min.js","assets/js/plugins/slick.checkboxselectcolumn.js","assets/js/plugins/slick.cellcopymanager.js","assets/js/plugins/slick.cellrangeselector.js","assets/js/plugins/slick.cellrangedecorator.js","assets/js/plugins/slick.autotooltips.js","assets/js/plugins/slick.rowselectionmodel.js","assets/js/plugins/slick.cellselectionmodel.js","assets/js/slick.columnpicker.js"]
+app_include_css = ["assets/css/erpnext.css","assets/css/jquery.dataTables.css","assets/css/dataTables.bootstrap.css"]
 web_include_js = "assets/js/erpnext-web.min.js"
 web_include_css = "assets/erpnext/css/website.css"
 
@@ -54,6 +31,8 @@ email_append_to = ["Job Applicant", "Opportunity", "Issue"]
 calendars = ["Task", "Production Order", "Time Log", "Leave Application"]
 
 website_generators = ["Item Group", "Item", "Sales Partner"]
+
+fixtures=["Custom Field","Property Setter"]
 
 website_context = {
 	"favicon": 	"/assets/erpnext/images/favicon.png",
@@ -93,6 +72,28 @@ doc_events = {
 		"validate": "erpnext.hr.doctype.employee.employee.validate_employee_role",
 		"on_update": "erpnext.hr.doctype.employee.employee.update_user_permissions"
 	},
+	"Purchase Invoice": {
+		"validate": "erpnext.selling.custom_methods.validate_batch",
+		"on_submit": ["erpnext.selling.custom_methods.create_batchwise_price_list","erpnext.selling.custom_methods.update_item_price_rate_pi"],
+		"on_cancel": ["erpnext.selling.custom_methods.cancel_batchwise_price_list","erpnext.selling.custom_methods.update_item_price_on_pi_cl"]
+	},
+	"Quotation": {
+		"on_update": "erpnext.selling.custom_methods.validate_price_list"
+	},
+	"Supplier Quotation":{
+		"on_submit":"erpnext.selling.custom_methods.update_item_price_sq",
+		"on_cancel":"erpnext.selling.custom_methods.update_item_price_on_sq_cl"
+	},
+	"Item Price":{
+		"on_update":"erpnext.selling.custom_methods.update_item_price_ip"
+	},
+	"Item":{
+		"validate":["erpnext.selling.custom_methods.check_eq_item_selected_twice","erpnext.selling.custom_methods.delete_eq_item_entry"],
+		"on_update":["erpnext.selling.custom_methods.auto_create_self_item_entry","erpnext.selling.custom_methods.create_eq_item_entry"]
+	},
+	"Delivery Note":{
+		"on_update":"erpnext.selling.custom_methods.update_sales_item_name"
+	},
 	"Sales Taxes and Charges Template": {
 		"on_update": "erpnext.shopping_cart.doctype.shopping_cart_settings.shopping_cart_settings.validate_cart_settings"
 	},
@@ -110,7 +111,9 @@ scheduler_events = {
 		"erpnext.setup.doctype.email_digest.email_digest.send",
 		"erpnext.support.doctype.issue.issue.auto_close_tickets",
 		"erpnext.accounts.doctype.fiscal_year.fiscal_year.auto_create_fiscal_year",
-		"erpnext.hr.doctype.employee.employee.send_birthday_reminders"
+		"erpnext.hr.doctype.employee.employee.send_birthday_reminders",
+		"erpnext.selling.custom_methods.generate_po",
+		"erpnext.selling.custom_methods.create_supplier_quotation"
 	],
 	"daily_long": [
 		"erpnext.setup.doctype.backup_manager.backup_manager.take_backups_daily"

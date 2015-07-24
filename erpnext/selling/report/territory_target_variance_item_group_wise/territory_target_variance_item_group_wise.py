@@ -35,7 +35,6 @@ def execute(filters=None):
 			data.append(row)
 
 	return columns, sorted(data, key=lambda x: (x[0], x[1]))
-
 def get_columns(filters):
 	for fieldname in ["fiscal_year", "period", "target_on"]:
 		if not filters.get(fieldname):

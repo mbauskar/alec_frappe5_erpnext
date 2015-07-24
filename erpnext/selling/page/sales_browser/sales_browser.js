@@ -157,7 +157,6 @@ erpnext.SalesChart = Class.extend({
 				}
 			});
 		});
-
 		d.show();
 	},
 });

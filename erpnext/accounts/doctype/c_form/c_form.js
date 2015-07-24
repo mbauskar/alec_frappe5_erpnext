@@ -1,8 +1,10 @@
+
 // Copyright (c) 2015, Frappe Technologies Pvt. Ltd. and Contributors
 // License: GNU General Public License v3. See license.txt
 
 //c-form js file
 // -----------------------------
+
 frappe.require("assets/erpnext/js/utils.js");
 
 cur_frm.fields_dict.invoices.grid.get_field("invoice_no").get_query = function(doc) {

@@ -126,6 +126,7 @@ class NamingSeries(Document):
 	def get_options(self, arg=None):
 		return frappe.get_meta(arg or self.select_doc_for_series).get_field("naming_series").options
 
+
 	def get_current(self, arg=None):
 		"""get series current"""
 		if self.prefix:

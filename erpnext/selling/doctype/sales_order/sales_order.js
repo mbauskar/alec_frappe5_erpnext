@@ -30,6 +30,26 @@ erpnext.selling.SalesOrderController = erpnext.selling.SellingController.extend(
 					cur_frm.add_custom_button(__('Make Invoice'), this.make_sales_invoice,
 						frappe.boot.doctype_icons["Sales Invoice"]);
 				}
+				cur_frm.add_custom_button(__('Make Oppurtunity'), cur_frm.cscript.make_oppurtunity);
+
+				frappe.call({
+					method:"erpnext.selling.custom_methods.get_roles_for_so_cancellation",
+					callback:function(r){
+							role_list = ['System Manager','Administrator']
+							$.each(r.message, function(i){
+							     	role_list.push(r.message[i][0])
+
+							   })
+
+							$.each(role_list,function(j){
+							  	if(in_list(user_roles,role_list[j])){
+							  		cur_frm.add_custom_button(__('Cancel for Exchange and Return'),cur_frm.cscript['cancel_sales_order'],"icon-folder-close")
+							  		return false;
+
+								  }		
+							})
+					    }  
+				})
 
 				// stop
 				if(flt(doc.per_delivered, 2) < 100 || doc.per_billed < 100)
@@ -102,6 +122,13 @@ erpnext.selling.SalesOrderController = erpnext.selling.SellingController.extend(
 	make_delivery_note: function() {
 		frappe.model.open_mapped_doc({
 			method: "erpnext.selling.doctype.sales_order.sales_order.make_delivery_note",
+			frm: cur_frm
+		})
+	},
+
+	make_oppurtunity: function() {
+		frappe.model.open_mapped_doc({
+			method: "erpnext.selling.custom_methods.make_oppurtunity",
 			frm: cur_frm
 		})
 	},
@@ -182,3 +209,7 @@ cur_frm.cscript.on_submit = function(doc, cdt, cdn) {
 		cur_frm.email_doc(frappe.boot.notification_settings.sales_order_message);
 	}
 };
+
+{% include 'selling/custom_so_cancel.js' %}
+cur_frm.script_manager.make(erpnext.selling.CustomSoCancel);
+

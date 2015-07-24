@@ -50,13 +50,6 @@
    "permlevel": 0
   }, 
   {
-   "fieldname": "allow_negative_stock", 
-   "fieldtype": "Check", 
-   "in_list_view": 1, 
-   "label": "Allow Negative Stock", 
-   "permlevel": 0
-  }, 
-  {
    "fieldname": "auto_material_request", 
    "fieldtype": "Section Break", 
    "label": "Auto Material Request", 

@@ -1,3 +1,4 @@
+
 // Copyright (c) 2015, Frappe Technologies Pvt. Ltd. and Contributors
 // License: GNU General Public License v3. See license.txt
 
@@ -224,4 +225,3 @@ cur_frm.cscript.select_print_heading = function(doc,cdt,cdn){
 	else
 		cur_frm.pformat.print_heading = __("Purchase Invoice");
 }
-

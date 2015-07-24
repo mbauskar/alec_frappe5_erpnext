@@ -193,3 +193,5 @@ $.extend(erpnext.item, {
 
 
 });
+
+{% include 'stock/Stock_custom_changes.js' %}

@@ -54,18 +54,15 @@ erpnext.SalesFunnel = Class.extend({
 				me.get_data();
 			});
 		});
-
 		// bind refresh
 		this.elements.refresh_btn.on("click", function() {
 			me.get_data(this);
 		});
-
 		// bind resize
 		$(window).resize(function() {
 			me.render();
 		});
 	},
-
 	get_data: function(btn) {
 		var me = this;
 		frappe.call({
@@ -94,22 +91,18 @@ erpnext.SalesFunnel = Class.extend({
 			x_mid = (x_end - x_start) / 2.0,
 			y = 0,
 			y_old = 0.0;
-
 		if(this.options.total_value === 0) {
 			this.elements.no_data.toggle(true);
 			return;
 		}
-
 		this.options.data.forEach(function(d) {
 			context.fillStyle = d.color;
 			context.strokeStyle = d.color;
 			me.draw_triangle(x_start, x_mid, x_end, y, me.options.height);
-
 			y_old = y;
 
 			// new y
 			y = y + d.height;
-
 			// new x
 			var half_side = (me.options.height - y) / Math.sqrt(3);
 			x_start = x_mid - half_side;
@@ -140,7 +133,6 @@ erpnext.SalesFunnel = Class.extend({
 		$.each(this.options.data, function(i, d) {
 			d.height = me.options.height * d.value * Math.pow(i+1, 2) / me.options.total_weightage;
 		});
-
 		this.elements.canvas = $('<canvas></canvas>')
 			.appendTo(this.elements.funnel_wrapper.empty())
 			.attr("width", $(this.elements.funnel_wrapper).width())

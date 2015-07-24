@@ -157,6 +157,9 @@ cur_frm.cscript.on_submit = function(doc, cdt, cdn) {
 		cur_frm.email_doc(frappe.boot.notification_settings.quotation_message);
 }
 
+{% include 'selling/custom_query_report.js' %}
+cur_frm.script_manager.make(erpnext.selling.CustomQueryReport);
+
 frappe.ui.form.on("Quotation Item", "items_on_form_rendered", function(frm, cdt, cdn) {
 	// enable tax_amount field if Actual
 })

@@ -24,5 +24,3 @@ class StockSettings(Document):
 		if submitted_stock_frozen > stock_frozen_limit:
 			self.stock_frozen_upto_days = stock_frozen_limit
 			frappe.msgprint (_("`Freeze Stocks Older Than` should be smaller than %d days.") %stock_frozen_limit)
-
-

@@ -137,14 +137,12 @@ cur_frm.cscript.calculate_total = function(doc,cdt,cdn){
 cur_frm.cscript.calculate_total_amount = function(doc,cdt,cdn){
 	cur_frm.cscript.calculate_total(doc,cdt,cdn);
 }
-
 cur_frm.cscript.claim_amount = function(doc,cdt,cdn){
 	cur_frm.cscript.calculate_total(doc,cdt,cdn);
 
 	var child = locals[cdt][cdn];
 	refresh_field("sanctioned_amount", child.name, child.parentfield);
 }
-
 cur_frm.cscript.sanctioned_amount = function(doc,cdt,cdn){
 	cur_frm.cscript.calculate_total(doc,cdt,cdn);
 }

@@ -95,6 +95,15 @@ cur_frm.cscript.new_contact = function(){
 }
 
 
+
+cur_frm.cscript.validate = function(doc, cdt, cdn){
+	
+		setTimeout(function(){
+      refresh_field(['sales_item_name','delivery_note_item'])},2000)
+}
+
+
+
 // ***************** Get project name *****************
 cur_frm.fields_dict['project_name'].get_query = function(doc, cdt, cdn) {
 	return {
@@ -242,5 +251,5 @@ if (sys_defaults.auto_accounting_for_stock) {
 	}
 }
 
-
-
+{% include 'stock/custom_delivery_note.js' %}
+cur_frm.script_manager.make(erpnext.stock.CustomDeliveryNote);

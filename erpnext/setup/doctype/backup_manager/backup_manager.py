@@ -56,7 +56,6 @@ def take_backups_dropbox():
 		from erpnext.setup.doctype.backup_manager.backup_dropbox import backup_to_dropbox
 		did_not_upload, error_log = backup_to_dropbox()
 		if did_not_upload: raise Exception
-
 		send_email(True, "Dropbox")
 	except Exception:
 		file_and_error = [" - ".join(f) for f in zip(did_not_upload, error_log)]
@@ -72,7 +71,6 @@ def take_backups_gdrive():
 		from erpnext.setup.doctype.backup_manager.backup_googledrive import backup_to_gdrive
 		did_not_upload, error_log = backup_to_gdrive()
 		if did_not_upload: raise Exception
-
 		send_email(True, "Google Drive")
 	except Exception:
 		file_and_error = [" - ".join(f) for f in zip(did_not_upload, error_log)]

@@ -83,7 +83,6 @@ def backup_to_dropbox():
 
 	sess.set_token(frappe.db.get_value("Backup Manager", None, "dropbox_access_key"),
 		frappe.db.get_value("Backup Manager", None, "dropbox_access_secret"))
-
 	dropbox_client = client.DropboxClient(sess)
 
 	# upload database
@@ -93,7 +92,6 @@ def backup_to_dropbox():
 
 	frappe.db.close()
 	response = dropbox_client.metadata("/files")
-
 	# upload files to files folder
 	did_not_upload = []
 	error_log = []
@@ -116,7 +114,6 @@ def backup_to_dropbox():
 			except Exception:
 				did_not_upload.append(filename)
 				error_log.append(frappe.get_traceback())
-
 	frappe.connect()
 	return did_not_upload, list(set(error_log))
 
@@ -125,7 +122,6 @@ def get_dropbox_session():
 		from dropbox import session
 	except:
 		frappe.msgprint(_("Please install dropbox python module"), raise_exception=1)
-
 	if not (frappe.conf.dropbox_access_key or frappe.conf.dropbox_secret_key):
 		frappe.throw(_("Please set Dropbox access keys in your site config"))
 

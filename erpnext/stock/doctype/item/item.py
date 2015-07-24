@@ -444,4 +444,3 @@ def invalidate_cache_for_item(doc):
 
 	if doc.get("old_item_group") and doc.get("old_item_group") != doc.item_group:
 		invalidate_cache_for(doc, doc.old_item_group)
-

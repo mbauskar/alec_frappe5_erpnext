@@ -294,7 +294,6 @@ class TestStockEntry(unittest.TestCase):
 		gl_entries = frappe.db.sql("""select account, debit, credit
 			from `tabGL Entry` where voucher_type=%s and voucher_no=%s
 			order by account asc, debit asc""", (voucher_type, voucher_no), as_list=1)
-
 		self.assertTrue(gl_entries)
 		gl_entries.sort(key=lambda x: x[0])
 

@@ -131,7 +131,6 @@ class TestPaymentTool(unittest.TestCase):
 
 		self.check_outstanding_vouchers(payment_tool_doc, args, expected_outstanding)
 
-
 	def check_outstanding_vouchers(self, doc, args, expected_outstanding):
 		from erpnext.accounts.doctype.payment_tool.payment_tool import get_outstanding_vouchers
 		outstanding_entries = get_outstanding_vouchers(json.dumps(args))
@@ -176,7 +175,6 @@ class TestPaymentTool(unittest.TestCase):
 					jv_entry.get("against_purchase_order"),
 				]
 				self.assertTrue(row in expected_values)
-
 		self.assertEquals(new_jv.get("cheque_no"), paytool.reference_no)
 		self.assertEquals(new_jv.get("cheque_date"), paytool.reference_date)
 

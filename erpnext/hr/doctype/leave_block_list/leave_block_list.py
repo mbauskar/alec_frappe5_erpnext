@@ -16,7 +16,6 @@ class LeaveBlockList(Document):
 		for d in self.get("leave_block_list_dates"):
 			# validate fiscal year
 			validate_fiscal_year(d.block_date, self.year, _("Block Date"))
-
 			# date is not repeated
 			if d.block_date in dates:
 				frappe.msgprint(_("Date is repeated") + ":" + d.block_date, raise_exception=1)

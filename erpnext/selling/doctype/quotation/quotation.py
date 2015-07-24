@@ -88,6 +88,27 @@ class Quotation(SellingController):
 			print_lst.append(lst1)
 		return print_lst
 
+	def get_item_details(self,args): # Rohit
+		if not self.get('quotation_details'):
+			self.set('quotation_details', [])
+		for d in args:
+			nl = self.append('quotation_details', {})
+			nl.item_code = d.get('1')
+			nl.price_list_rate= d.get('6')
+			nl.rate= d.get('6')
+			nl.batch_no = d.get('5')
+			competitor = self.get_competitor_details(nl.item_code)
+			if competitor:
+				nl.competitor_rate = competitor[0][0]
+				nl.competitor_price_list = competitor[0][1]
+			nl.item_name=frappe.db.get_value('Item',nl.item_code,'item_name')
+			nl.manufacturer_pn=frappe.db.get_value('Item',nl.item_code,'manufacturer_pn')
+			nl.oem_part_number=frappe.db.get_value('Item',nl.item_code,'oem_part_number')
+			nl.description=frappe.db.get_value('Item',nl.item_code,'description')
+
+	def get_competitor_details(self,item_code):
+		if item_code:
+			return frappe.db.sql("select min(price_list_rate),price_list from `tabItem Price` where item_code='%s' and competitor=1"%(item_code),as_list=1)
 
 @frappe.whitelist()
 def make_sales_order(source_name, target_doc=None):

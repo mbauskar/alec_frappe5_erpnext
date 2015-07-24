@@ -10,7 +10,6 @@ def execute(filters=None):
 	if not filters: filters = {}
 	columns = get_columns()
 	last_col = len(columns)
-
 	item_list = get_items(filters)
 	aii_account_map = get_aii_accounts()
 	if item_list:

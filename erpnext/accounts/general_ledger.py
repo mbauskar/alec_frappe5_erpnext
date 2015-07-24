@@ -67,7 +67,6 @@ def check_if_in_list(gle, gl_map):
 def save_entries(gl_map, adv_adj, update_outstanding):
 	validate_account_for_auto_accounting_for_stock(gl_map)
 	round_off_debit_credit(gl_map)
-	
 	for entry in gl_map:
 		make_entry(entry, adv_adj, update_outstanding)
 		# check against budget
@@ -137,7 +136,6 @@ def make_round_off_gle(gl_map, debit_credit_diff):
 	})
 	
 	gl_map.append(round_off_gle)
-
 
 def delete_gl_entries(gl_entries=None, voucher_type=None, voucher_no=None,
 		adv_adj=False, update_outstanding="Yes"):

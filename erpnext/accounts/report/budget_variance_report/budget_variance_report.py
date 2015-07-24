@@ -12,7 +12,6 @@ from erpnext.controllers.trends import get_period_date_ranges, get_period_month_
 
 def execute(filters=None):
 	if not filters: filters = {}
-
 	columns = get_columns(filters)
 	period_month_ranges = get_period_month_ranges(filters["period"], filters["fiscal_year"])
 	cam_map = get_costcenter_account_month_map(filters)
@@ -37,7 +36,6 @@ def execute(filters=None):
 			data.append(row)
 
 	return columns, sorted(data, key=lambda x: (x[0], x[1]))
-
 def get_columns(filters):
 	for fieldname in ["fiscal_year", "period", "company"]:
 		if not filters.get(fieldname):

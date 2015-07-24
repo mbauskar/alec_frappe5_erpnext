@@ -18,7 +18,6 @@ class Contact(StatusUpdater):
 			if self.get(fieldname):
 				self.name = self.name + "-" + cstr(self.get(fieldname)).strip()
 				break
-
 	def validate(self):
 		self.set_status()
 		self.validate_primary_contact()

@@ -77,4 +77,3 @@ class CostCenter(NestedSet):
 				" - ".join(newdn.split(" - ")[:-1]))
 		else:
 			super(CostCenter, self).after_rename(olddn, newdn, merge)
-

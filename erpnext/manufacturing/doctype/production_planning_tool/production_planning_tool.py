@@ -359,7 +359,6 @@ class ProductionPlanningTool(Document):
 
 	def insert_purchase_request(self):
 		items_to_be_requested = self.get_requested_items()
-		
 		purchase_request_list = []
 		if items_to_be_requested:
 			for item in items_to_be_requested:
