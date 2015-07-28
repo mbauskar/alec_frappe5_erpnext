@@ -12,13 +12,13 @@ import json
 
 #check batch is of respective item code
 def validate_batch(doc,method):
-	for d in doc.get('entries'):
+	for d in doc.get('items'):
 		if d.batch_no and d.item_code != frappe.db.get_value('Batch',d.batch_no,'item'):
 			frappe.throw(_("Select batch respective to item code {0}").format(d.item_code))
 
 #maintain supplier name,rate,batch as EC-Rate of purchase
 def create_batchwise_price_list(doc, method):
-	for d in doc.get('entries'):
+	for d in doc.get('items'):
 		item_price=frappe.db.get_value('Item Price',{'item_code':d.item_code,'price_list':'EC - Rate of Purchase'},'name')
 		if not item_price:
 			create_item_price(d,doc)
@@ -53,7 +53,7 @@ def create_batchwise_item_price(name, d, doc):
 
 #on cancel delete created price list
 def cancel_batchwise_price_list(doc, method):
-	for d in doc.get('entries'):
+	for d in doc.get('items'):
 		if d.batch_no:
 			frappe.db.sql("delete from `tabBatchwise Purchase Rate` where document='%s'"%(doc.name))
 
@@ -208,7 +208,6 @@ def get_status(doc, item):
 #build query
 @frappe.whitelist()
 def get_query(doc):
-	frappe.errprint(doc.get('part_no'))
 	column = get_columns(doc)
 	table = get_tables(doc)
 	condition = get_conditions(doc)
@@ -434,7 +433,8 @@ def make_oppurtunity(source_name, target_doc=None):
 	return target_doc
 
 def  update_item_price_rate_pi(doc,method):
-	for item in doc.get('entries'):
+	# update the rate if new rate is less than existing item rate
+	for item in doc.get('items'):
 		if item.item_code:
 			rate=get_ec_rate(item.item_code)
 			if rate and (item.rate < rate):
@@ -443,7 +443,7 @@ def  update_item_price_rate_pi(doc,method):
 					and price_list='EC - Rate of Purchase'"""%(item.rate,item.item_code))
 
 def update_item_price_sq(doc,method):
-	for d in doc.get('quotation_items'):
+	for d in doc.get('items'):
 		rate=get_ec_rate(d.item_code)
 		if rate:
 			if d.rate < rate:
@@ -468,7 +468,7 @@ def get_ec_rate(item_code):
 	return frappe.db.get_value("Item Price",{"item_code":item_code,"price_list":"EC - Rate of Purchase"},"price_list_rate")
 
 def update_item_price_on_pi_cl(doc,method):
-	for item in doc.get('entries'):
+	for item in doc.get('items'):
 		if item.item_code:
 			rate=get_rate(item.item_code)
 			if rate:
@@ -478,7 +478,7 @@ def update_item_price_on_pi_cl(doc,method):
 					and price_list='EC - Rate of Purchase'"""%(rate[0][0],item.item_code))
 			
 def update_item_price_on_sq_cl(doc,method):
-	for item in doc.get('quotation_items'):
+	for item in doc.get('item_list'):
 		if item.item_code:
 			rate=get_rate(item.item_code)
 			if rate:
@@ -558,7 +558,7 @@ def get_alternative_item_details(doc):
 	item_dict = {}
 	alteritem_dic={}
 	if doc:
-		for d in doc.get('delivery_note_details'):
+		for d in doc.get('items'):
 			result = {}
 			if d.get("sales_item_name"):
 				result = frappe.db.sql(""" SELECT
@@ -588,7 +588,7 @@ def get_alternative_item_details(doc):
 
 
 def update_sales_item_name(doc,method):
-	for row in doc.get('delivery_note_details'):
+	for row in doc.get('items'):
 		row.sales_item_name = row.item_code
 		row.old_oem = row.current_oem	
 
@@ -659,7 +659,7 @@ def set_alternative_item_details(alter_dic,doc):
 		alter_dic=json.loads(alter_dic)
 		#doc=json.loads(doc)
 		c_doc=frappe.get_doc("Delivery Note",doc)
-		for d in c_doc.get('delivery_note_details'):
+		for d in c_doc.get('items'):
 			if alter_dic.has_key(d.item_code):
 				original_item=d.item_code
 				alter_item=alter_dic.get(d.item_code)["item_code"]

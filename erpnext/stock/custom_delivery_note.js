@@ -18,11 +18,12 @@ cur_frm.cscript.get_alternative_items= function(doc,cdt,cdn){
         })
       var fd = dialog.fields_dict;
       $(fd.get_item_details.input).closest('div').css("padding-top","15px")
-      if (doc.delivery_note_details){
+      if (doc.items){
         frappe.call({
             method:"erpnext.selling.custom_methods.get_alternative_item_details",
             args:{"doc":doc},
             callback:function(r){
+              console.log(r)
                     //Get data from server and Render it on dialog
                     var me = this;
                      var result_set =r.message[0]
@@ -72,7 +73,7 @@ cur_frm.cscript.get_alternative_items= function(doc,cdt,cdn){
               
                   $(fd.get_item_details.input).click(function(){
                         
-                       $.each(doc.delivery_note_details,function(i,d){
+                       $.each(doc.items,function(i,d){
                             if (alter_dic[d.item_code]){
                                 original_item=d.item_code
                                 alter_item=alter_dic[d.item_code]
@@ -97,10 +98,16 @@ cur_frm.cscript.get_alternative_items= function(doc,cdt,cdn){
                           }
                       }) 
                     dialog.hide()
-                    refresh_field('delivery_note_details') 
+                    refresh_field('items') 
                     cur_frm.save()       
                 }) 
           }
       })
     }
 }
+
+frappe.ui.form.on("Delivery Note Items", "item_code", function(doc, cdt, cdn) {
+    var d = locals[cdt][cdn]
+    d.sales_item_name = d.item_code
+    refresh_field('sales_item_name')
+});
