@@ -31,7 +31,7 @@ def create_item_price(d,doc):
 	pl.buying = 1
 	pl.selling = 1
 	pl.item_code= d.item_code
-	pl.price_list_rate=1
+	pl.price_list_rate=d.rate
 	pl.item_name=d.item_name
 	pl.item_description=d.description
 	pl.currency=doc.currency
