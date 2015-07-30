@@ -291,7 +291,7 @@ def generate_po():
 				items=frappe.db.sql("""select item_code,qty from `tabSales Order Item` where parent='%s'"""%(sales_order[0]),as_list=1)
 				for item in items:
 					stock_balance=get_stock_balance(item[0])
-					if stock_balance and stock_balance[0][0]==0:
+					if stock_balance and cint(stock_balance[0][0])==0:
 						supplier=get_supplier_details(item[0])
 						#frappe.errprint([item,supplier])
 						if supplier and supplier[0][1]:
