@@ -83,10 +83,10 @@ class Quotation(SellingController):
 		return print_lst
 
 	def get_item_details(self,args): # Rohit
-		if not self.get('quotation_details'):
-			self.set('quotation_details', [])
+		if not self.get('items'):
+			self.set('items', [])
 		for d in args:
-			nl = self.append('quotation_details', {})
+			nl = self.append('items', {})
 			nl.item_code = d.get('1')
 			nl.price_list_rate= d.get('6')
 			nl.rate= d.get('6')

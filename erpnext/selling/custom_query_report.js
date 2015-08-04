@@ -39,7 +39,7 @@ erpnext.selling.CustomQueryReport = erpnext.selling.QuotationController.extend({
       explicitInitialization: true,
       multiColumnSort: true,
       forceFitColumns:true,
-      enableColumnReorder: true
+      enableColumnReorder: false
     };
 
     var columnFilters = {};
@@ -80,10 +80,8 @@ erpnext.selling.CustomQueryReport = erpnext.selling.QuotationController.extend({
       }
       d[0]=i+1
     }
-    console.log("trrwwwwwwwwwwww")
     dataView = new Slick.Data.DataView();
     this.grid = new Slick.Grid(query_report, dataView, columns, options);
-    console.log("trr")
     var me = this
     dataView.onRowCountChanged.subscribe(function (e, args) {
       me.grid.updateRowCount();
@@ -140,7 +138,6 @@ erpnext.selling.CustomQueryReport = erpnext.selling.QuotationController.extend({
       }
       dataView.setItems(data);
     });
-
       var columnpicker = new Slick.Controls.ColumnPicker(columns, this.grid, options);
       selected_grid_data = this.grid
     })

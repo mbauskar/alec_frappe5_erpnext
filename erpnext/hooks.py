@@ -10,7 +10,7 @@ github_link = "https://github.com/frappe/erpnext"
 
 error_report_email = "support@erpnext.com"
 
-app_include_js = ["assets/js/erpnext.min.js","assets/js/plugins/slick.checkboxselectcolumn.js","assets/js/plugins/slick.cellcopymanager.js","assets/js/plugins/slick.cellrangeselector.js","assets/js/plugins/slick.cellrangedecorator.js","assets/js/plugins/slick.autotooltips.js","assets/js/plugins/slick.rowselectionmodel.js","assets/js/plugins/slick.cellselectionmodel.js","assets/js/slick.columnpicker.js"]
+app_include_js = ["assets/js/erpnext.min.js","assets/js/plugins/slick.checkboxselectcolumn.js","assets/js/plugins/slick.cellcopymanager.js","assets/js/plugins/slick.cellrangeselector.js","assets/js/plugins/slick.cellrangedecorator.js","assets/js/plugins/slick.autotooltips.js","assets/js/plugins/slick.rowselectionmodel.js","assets/js/plugins/slick.cellselectionmodel.js","assets/js/plugins/slick.columnpicker.js"]
 app_include_css = ["assets/css/erpnext.css","assets/css/jquery.dataTables.css","assets/css/dataTables.bootstrap.css"]
 web_include_js = "assets/js/erpnext-web.min.js"
 web_include_css = "assets/erpnext/css/website.css"
