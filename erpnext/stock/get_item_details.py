@@ -37,7 +37,6 @@ def get_item_details(args):
 	item_doc = frappe.get_doc("Item", args.item_code)
 	item = item_doc
 
-
 	validate_item_details(args, item)
 
 	out = get_basic_details(args, item)
@@ -61,7 +60,7 @@ def get_item_details(args):
 	out.update(get_pricing_rule_for_item(args))
 
 	if args.get("parenttype") in ("Sales Invoice", "Delivery Note"):
-		if item_doc.has_serial_no == "Yes" and not args.serial_no:
+		if item_doc.has_serial_no == 1 and not args.serial_no:
 			out.serial_no = get_serial_nos_by_fifo(args, item_doc)
 
 	if args.transaction_date and item.lead_time_days:
@@ -119,10 +118,10 @@ def validate_item_details(args, item):
 	if args.transaction_type == "selling":
 		# validate if sales item or service item
 		if args.get("order_type") == "Maintenance":
-			if item.is_service_item != "Yes":
+			if item.is_service_item != 1:
 				throw(_("Item {0} must be a Service Item.").format(item.name))
 
-		elif item.is_sales_item != "Yes":
+		elif item.is_sales_item != 1:
 			throw(_("Item {0} must be a Sales Item").format(item.name))
 
 		if cint(item.has_variants):
@@ -130,10 +129,10 @@ def validate_item_details(args, item):
 
 	elif args.transaction_type == "buying" and args.parenttype != "Material Request":
 		# validate if purchase item or subcontracted item
-		if item.is_purchase_item != "Yes":
+		if item.is_purchase_item != 1:
 			throw(_("Item {0} must be a Purchase Item").format(item.name))
 
-		if args.get("is_subcontracted") == "Yes" and item.is_sub_contracted_item != "Yes":
+		if args.get("is_subcontracted") == "Yes" and item.is_sub_contracted_item != 1:
 			throw(_("Item {0} must be a Sub-contracted Item").format(item.name))
 
 def get_basic_details(args, item):
@@ -218,6 +217,8 @@ def get_price_list_rate(args, item_doc, out):
 			price_list_rate = get_price_list_rate_for(args, item_doc.variant_of)
 
 		if not price_list_rate:
+			if args.price_list and args.rate:
+				insert_item_price(args)
 			return {}
 
 		out.price_list_rate = flt(price_list_rate) * flt(args.plc_conversion_rate) \
@@ -227,6 +228,22 @@ def get_price_list_rate(args, item_doc, out):
 			from erpnext.stock.doctype.item.item import get_last_purchase_details
 			out.update(get_last_purchase_details(item_doc.name,
 				args.parent, args.conversion_rate))
+
+def insert_item_price(args):
+	"""Insert Item Price if Price List and Price List Rate are specified and currency is the same"""
+	if frappe.db.get_value("Price List", args.price_list, "currency") == args.currency \
+		and cint(frappe.db.get_single_value("Stock Settings", "auto_insert_price_list_rate_if_missing")):
+		if frappe.has_permission("Item Price", "write"):
+			item_price = frappe.get_doc({
+				"doctype": "Item Price",
+				"price_list": args.price_list,
+				"item_code": args.item_code,
+				"currency": args.currency,
+				"price_list_rate": args.rate
+			})
+			item_price.insert()
+			frappe.msgprint("Item Price added for {0} in Price List {1}".format(args.item_code,
+				args.price_list))
 
 def get_price_list_rate_for(args, item_code):
 	return frappe.db.get_value("Item Price",
@@ -304,7 +321,7 @@ def get_serial_nos_by_fifo(args, item_doc):
 		order by timestamp(purchase_date, purchase_time) asc limit %(qty)s""", {
 			"item_code": args.item_code,
 			"warehouse": args.warehouse,
-			"qty": cint(args.qty)
+			"qty": abs(cint(args.qty))
 		}))
 
 def get_actual_batch_qty(batch_no,warehouse,item_code):
@@ -341,7 +358,7 @@ def get_batch_qty(batch_no,warehouse,item_code):
 	actual_batch_qty = get_actual_batch_qty(batch_no,warehouse,item_code)
 	if batch_no:
 		return {'actual_batch_qty': actual_batch_qty}
-	
+
 @frappe.whitelist()
 def apply_price_list(args):
 	"""

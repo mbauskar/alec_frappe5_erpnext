@@ -9,10 +9,13 @@ from frappe import _
 from frappe.model.document import Document
 from erpnext.manufacturing.doctype.bom.bom import validate_bom_no
 from dateutil.relativedelta import relativedelta
+from erpnext.stock.doctype.item.item import validate_end_of_life
 
 class OverProductionError(frappe.ValidationError): pass
 class StockOverProductionError(frappe.ValidationError): pass
 class OperationTooLongError(frappe.ValidationError): pass
+class ProductionNotApplicableError(frappe.ValidationError): pass
+class ItemHasVariantError(frappe.ValidationError): pass
 
 from erpnext.manufacturing.doctype.workstation.workstation import WorkstationHolidayError, NotInWorkingHoursError
 from erpnext.projects.doctype.time_log.time_log import OverlapError
@@ -91,7 +94,7 @@ class ProductionOrder(Document):
 			(self.sales_order, self.production_item))[0][0]
 		# total qty in SO
 		so_qty = flt(so_item_qty) + flt(dnpi_qty)
-		
+
 		allowance_percentage = flt(frappe.db.get_single_value("Manufacturing Settings", "over_production_allowance_percentage"))
 		if total_qty > so_qty + (allowance_percentage/100 * so_qty):
 			frappe.throw(_("Cannot produce more Item {0} than Sales Order quantity {1}").format(self.production_item,
@@ -174,17 +177,12 @@ class ProductionOrder(Document):
 
 	def set_production_order_operations(self):
 		"""Fetch operations from BOM and set in 'Production Order'"""
-		if not self.bom_no:
+		if not self.bom_no or cint(frappe.db.get_single_value("Manufacturing Settings", "disable_capacity_planning")):
 			return
 		self.set('operations', [])
 		operations = frappe.db.sql("""select operation, description, workstation, idx,
 			hour_rate, time_in_mins, "Pending" as status from `tabBOM Operation`
 			where parent = %s order by idx""", self.bom_no, as_dict=1)
-		if operations:
-			self.track_operations=1
-		else:
-			self.track_operations=0
-			frappe.msgprint(_("Cannot 'track operations' as selected BOM does not have Operations."))
 		self.set('operations', operations)
 		self.calculate_time()
 
@@ -322,13 +320,15 @@ class ProductionOrder(Document):
 	def delete_time_logs(self):
 		for time_log in frappe.get_all("Time Log", ["name"], {"production_order": self.name}):
 			frappe.delete_doc("Time Log", time_log.name)
-	
+
 	def validate_production_item(self):
-		if frappe.db.get_value("Item", self.production_item, "is_pro_applicable")=='No':
-			frappe.throw(_("Item is not allowed to have Production Order."))
-		
+		if not frappe.db.get_value("Item", self.production_item, "is_pro_applicable"):
+			frappe.throw(_("Item is not allowed to have Production Order."), ProductionNotApplicableError)
+
 		if frappe.db.get_value("Item", self.production_item, "has_variants"):
-			frappe.throw(_("Production Order cannot be raised against a Item Template"))
+			frappe.throw(_("Production Order cannot be raised against a Item Template"), ItemHasVariantError)
+
+		validate_end_of_life(self.production_item)
 
 @frappe.whitelist()
 def get_item_details(item):

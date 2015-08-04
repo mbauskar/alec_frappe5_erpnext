@@ -12,6 +12,29 @@ from erpnext.stock.doctype.stock_entry.test_stock_entry import make_stock_entry
 test_ignore = ["BOM"]
 test_dependencies = ["Warehouse"]
 
+def make_item(item_code, properties=None):
+	if frappe.db.exists("Item", item_code):
+		return frappe.get_doc("Item", item_code)
+
+	item = frappe.get_doc({
+		"doctype": "Item",
+		"item_code": item_code,
+		"item_name": item_code,
+		"description": item_code,
+		"item_group": "Products"
+	})
+
+	if properties:
+		item.update(properties)
+
+
+	if item.is_stock_item and not item.default_warehouse:
+		item.default_warehouse = "_Test Warehouse - _TC"
+
+	item.insert()
+
+	return item
+
 class TestItem(unittest.TestCase):
 	def get_item(self, idx):
 		item_code = test_records[idx].get("item_code")
@@ -21,16 +44,16 @@ class TestItem(unittest.TestCase):
 		else:
 			item = frappe.get_doc("Item", item_code)
 		return item
-	
+
 	def test_template_cannot_have_stock(self):
 			item = self.get_item(10)
-			se = make_stock_entry(item_code=item.name, target="Stores - _TC", qty=1, incoming_rate=1)
+			make_stock_entry(item_code=item.name, target="Stores - _TC", qty=1, incoming_rate=1)
 			item.has_variants = 1
 			self.assertRaises(ItemTemplateCannotHaveStock, item.save)
-	
+
 	def test_default_warehouse(self):
 		item = frappe.copy_doc(test_records[0])
-		item.is_stock_item = "Yes"
+		item.is_stock_item = 1
 		item.default_warehouse = None
 		self.assertRaises(WarehouseNotSet, item.insert)
 

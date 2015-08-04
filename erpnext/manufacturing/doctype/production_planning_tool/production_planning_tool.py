@@ -44,31 +44,35 @@ class ProductionPlanningTool(Document):
 		""" Pull sales orders  which are pending to deliver based on criteria selected"""
 		so_filter = item_filter = ""
 		if self.from_date:
-			so_filter += ' and so.transaction_date >= "' + self.from_date + '"'
+			so_filter += " and so.transaction_date >= %(from_date)s"
 		if self.to_date:
-			so_filter += ' and so.transaction_date <= "' + self.to_date + '"'
+			so_filter += " and so.transaction_date <= %(to_date)s"
 		if self.customer:
-			so_filter += ' and so.customer = "' + self.customer + '"'
+			so_filter += " and so.customer = %(customer)s"
 
 		if self.fg_item:
-			item_filter += ' and item.name = "' + self.fg_item + '"'
+			item_filter += " and item.name = %(item)s"
 
 		open_so = frappe.db.sql("""
 			select distinct so.name, so.transaction_date, so.customer, so.base_grand_total
 			from `tabSales Order` so, `tabSales Order Item` so_item
 			where so_item.parent = so.name
 				and so.docstatus = 1 and so.status != "Stopped"
-				and so.company = %s
-				and ifnull(so_item.qty, 0) > ifnull(so_item.delivered_qty, 0) %s
+				and so.company = %(company)s
+				and ifnull(so_item.qty, 0) > ifnull(so_item.delivered_qty, 0) {0}
 				and (exists (select name from `tabItem` item where item.name=so_item.item_code
-					and (ifnull(item.is_pro_applicable, 'No') = 'Yes'
-						or ifnull(item.is_sub_contracted_item, 'No') = 'Yes') %s)
+					and (item.is_pro_applicable = 1 or item.is_sub_contracted_item = 1 {1}))
 					or exists (select name from `tabPacked Item` pi
 						where pi.parent = so.name and pi.parent_item = so_item.item_code
 							and exists (select name from `tabItem` item where item.name=pi.item_code
-								and (ifnull(item.is_pro_applicable, 'No') = 'Yes'
-									or ifnull(item.is_sub_contracted_item, 'No') = 'Yes') %s)))
-			""" % ('%s', so_filter, item_filter, item_filter), self.company, as_dict=1)
+								and (item.is_pro_applicable = 1 or item.is_sub_contracted_item = 1) {2})))
+			""".format(so_filter, item_filter, item_filter), {
+				"from_date": self.from_date,
+				"to_date": self.to_date,
+				"customer": self.customer,
+				"item": self.fg_item,
+				"company": self.company
+			}, as_dict=1)
 
 		self.add_so_in_table(open_so)
 
@@ -108,8 +112,8 @@ class ProductionPlanningTool(Document):
 			from `tabSales Order Item` so_item
 			where parent in (%s) and docstatus = 1 and ifnull(qty, 0) > ifnull(delivered_qty, 0)
 			and exists (select * from `tabItem` item where item.name=so_item.item_code
-				and (ifnull(item.is_pro_applicable, 'No') = 'Yes'
-					or ifnull(item.is_sub_contracted_item, 'No') = 'Yes')) %s""" % \
+				and (item.is_pro_applicable = 1
+					or item.is_sub_contracted_item = 1)) %s""" % \
 			(", ".join(["%s"] * len(so_list)), item_condition), tuple(so_list), as_dict=1)
 
 		if self.fg_item:
@@ -123,8 +127,8 @@ class ProductionPlanningTool(Document):
 			and pi.parent_item = so_item.item_code
 			and so_item.parent in (%s) and ifnull(so_item.qty, 0) > ifnull(so_item.delivered_qty, 0)
 			and exists (select * from `tabItem` item where item.name=pi.item_code
-				and (ifnull(item.is_pro_applicable, 'No') = 'Yes'
-					or ifnull(item.is_sub_contracted_item, 'No') = 'Yes')) %s""" % \
+				and (item.is_pro_applicable = 1
+					or item.is_sub_contracted_item = 1)) %s""" % \
 			(", ".join(["%s"] * len(so_list)), item_condition), tuple(so_list), as_dict=1)
 
 		return items + packed_items
@@ -178,7 +182,7 @@ class ProductionPlanningTool(Document):
 		for d in self.get("items"):
 			if d.bom_no:
 				bom_dict.setdefault(d.bom_no, []).append([d.sales_order, flt(d.planned_qty)])
-				if frappe.db.get_value("Item", d.item_code, "is_pro_applicable") == "Yes":
+				if frappe.db.get_value("Item", d.item_code, "is_pro_applicable"):
 					item_dict[(d.item_code, d.sales_order, d.warehouse)] = {
 						"production_item"	: d.item_code,
 						"sales_order"		: d.sales_order,
@@ -239,10 +243,10 @@ class ProductionPlanningTool(Document):
 					ifnull(sum(ifnull(fb.qty, 0)/ifnull(bom.quantity, 1)), 0) as qty,
 					fb.description, fb.stock_uom, it.min_order_qty
 					from `tabBOM Explosion Item` fb, `tabBOM` bom, `tabItem` it
-					where bom.name = fb.parent and it.name = fb.item_code 
-					and ifnull(it.is_pro_applicable, 'No') = 'No'
-					and ifnull(it.is_sub_contracted_item, 'No') = 'No'
-					and ifnull(it.is_stock_item, 'No') = 'Yes'
+					where bom.name = fb.parent and it.name = fb.item_code
+					and is_pro_applicable = 0
+					and is_sub_contracted_item = 0
+					and is_stock_item = 1
 					and fb.docstatus<2 and bom.name=%s
 					group by item_code, stock_uom""", bom, as_dict=1):
 						bom_wise_item_details.setdefault(d.item_code, d)
@@ -255,7 +259,7 @@ class ProductionPlanningTool(Document):
 					from `tabBOM Item` bom_item, `tabBOM` bom, tabItem item
 					where bom.name = bom_item.parent and bom.name = %s and bom_item.docstatus < 2
 					and bom_item.item_code = item.name
-					and ifnull(item.is_stock_item, 'No') = 'Yes'
+					and item.is_stock_item = 1
 					group by item_code""", bom, as_dict=1):
 						bom_wise_item_details.setdefault(d.item_code, d)
 

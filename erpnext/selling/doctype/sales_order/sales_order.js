@@ -18,17 +18,16 @@ erpnext.selling.SalesOrderController = erpnext.selling.SellingController.extend(
 
 				// delivery note
 				if(flt(doc.per_delivered, 2) < 100 && ["Sales", "Shopping Cart"].indexOf(doc.order_type)!==-1)
-					cur_frm.add_custom_button(__('Make Delivery'), this.make_delivery_note, "icon-truck");
+					cur_frm.add_custom_button(__('Make Delivery'), this.make_delivery_note);
 
 				// indent
 				if(!doc.order_type || ["Sales", "Shopping Cart"].indexOf(doc.order_type)!==-1)
 					cur_frm.add_custom_button(__('Make ') + __('Material Request'),
-						this.make_material_request, "icon-ticket");
+						this.make_material_request);
 
 				// sales invoice
 				if(flt(doc.per_billed, 2) < 100) {
-					cur_frm.add_custom_button(__('Make Invoice'), this.make_sales_invoice,
-						frappe.boot.doctype_icons["Sales Invoice"]);
+					cur_frm.add_custom_button(__('Make Invoice'), this.make_sales_invoice);
 				}
 				cur_frm.add_custom_button(__('Make Oppurtunity'), cur_frm.cscript.make_oppurtunity);
 
@@ -53,20 +52,17 @@ erpnext.selling.SalesOrderController = erpnext.selling.SellingController.extend(
 
 				// stop
 				if(flt(doc.per_delivered, 2) < 100 || doc.per_billed < 100)
-					cur_frm.add_custom_button(__('Stop'), cur_frm.cscript['Stop Sales Order'],
-						"icon-exclamation", "btn-default")
+					cur_frm.add_custom_button(__('Stop'), cur_frm.cscript['Stop Sales Order'])
 
 						// maintenance
 						if(flt(doc.per_delivered, 2) < 100 && ["Sales", "Shopping Cart"].indexOf(doc.order_type)===-1) {
-							cur_frm.add_custom_button(__('Make Maint. Visit'),
-								this.make_maintenance_visit, null, "btn-default");
-							cur_frm.add_custom_button(__('Make Maint. Schedule'),
-								this.make_maintenance_schedule, null, "btn-default");
+							cur_frm.add_custom_button(__('Make Maint. Visit'), this.make_maintenance_visit);
+							cur_frm.add_custom_button(__('Make Maint. Schedule'), this.make_maintenance_schedule);
 						}
 
 			} else {
 				// un-stop
-				cur_frm.add_custom_button(__('Unstop'), cur_frm.cscript['Unstop Sales Order'], "icon-check");
+				cur_frm.add_custom_button(__('Unstop'), cur_frm.cscript['Unstop Sales Order']);
 			}
 		}
 
@@ -84,7 +80,7 @@ erpnext.selling.SalesOrderController = erpnext.selling.SellingController.extend(
 							company: cur_frm.doc.company
 						}
 					})
-				}, "icon-download", "btn-default");
+				});
 		}
 
 		this.order_type(doc);

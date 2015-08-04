@@ -64,26 +64,25 @@ class StockLedgerEntry(Document):
 
 		item_det = item_det[0]
 
-		if item_det.is_stock_item != 'Yes':
+		if item_det.is_stock_item != 1:
 			frappe.throw(_("Item {0} must be a stock Item").format(self.item_code))
 
 		# check if batch number is required
 		if self.voucher_type != 'Stock Reconciliation':
-			if item_det.has_batch_no =='Yes':
+			if item_det.has_batch_no ==1:
 				if not self.batch_no:
 					frappe.throw(_("Batch number is mandatory for Item {0}").format(self.item_code))
 				elif not frappe.db.get_value("Batch",{"item": self.item_code, "name": self.batch_no}):
 						frappe.throw(_("{0} is not a valid Batch Number for Item {1}").format(self.batch_no, self.item_code))
 
-			elif item_det.has_batch_no =='No' and self.batch_no:
+			elif item_det.has_batch_no ==0 and self.batch_no:
 					frappe.throw(_("The Item {0} cannot have Batch").format(self.item_code))
 
 		if item_det.has_variants:
 			frappe.throw(_("Stock cannot exist for Item {0} since has variants").format(self.item_code),
 				ItemTemplateCannotHaveStock)
 
-		if not self.stock_uom:
-			self.stock_uom = item_det.stock_uom
+		self.stock_uom = item_det.stock_uom
 
 	def check_stock_frozen_date(self):
 		stock_frozen_upto = frappe.db.get_value('Stock Settings', None, 'stock_frozen_upto') or ''

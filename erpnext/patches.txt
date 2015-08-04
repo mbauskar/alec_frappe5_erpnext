@@ -24,6 +24,9 @@ erpnext.patches.v4_0.map_charge_to_taxes_and_charges
 execute:frappe.reload_doc('support', 'doctype', 'newsletter') # 2014-01-31
 execute:frappe.reload_doc('hr', 'doctype', 'employee') # 2014-02-03
 execute:frappe.db.sql("update tabPage set module='Core' where name='Setup'")
+
+# inserted this patch here since Item types are being changed
+erpnext.patches.v5_2.change_item_selects_to_checks
 erpnext.patches.v4_0.fields_to_be_renamed
 erpnext.patches.v4_0.rename_sitemap_to_route
 erpnext.patches.v4_0.fix_contact_address
@@ -173,8 +176,15 @@ erpnext.patches.v5_0.item_variants
 erpnext.patches.v5_0.update_item_desc_in_invoice
 erpnext.patches.v5_1.fix_against_account
 erpnext.patches.v5_1.fix_credit_days_based_on
-erpnext.patches.v5_1.track_operations
 execute:frappe.rename_doc("DocType", "Salary Manager", "Process Payroll", force=True)
 erpnext.patches.v5_1.rename_roles
 erpnext.patches.v5_1.default_bom
 execute:frappe.delete_doc("DocType", "Party Type")
+execute:frappe.delete_doc("Module Def", "Contacts")
+erpnext.patches.v5_4.fix_reserved_qty_and_sle_for_packed_items # 30-07-2015
+execute:frappe.reload_doctype("Leave Type")
+execute:frappe.db.sql("update `tabLeave Type` set include_holiday=0")
+erpnext.patches.v5_4.set_root_and_report_type
+erpnext.patches.v5_4.notify_system_managers_regarding_wrong_tax_calculation
+erpnext.patches.v5_4.fix_invoice_outstanding
+execute:frappe.db.sql("update `tabStock Ledger Entry` set stock_queue = '[]' where voucher_type = 'Stock Reconciliation' and ifnull(qty_after_transaction, 0) = 0")
