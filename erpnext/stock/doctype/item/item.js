@@ -2,6 +2,7 @@
 // License: GNU General Public License v3. See license.txt
 
 frappe.provide("erpnext.item");
+{% include 'frappe_subscription/frappe_subscription/item.js' %}
 
 frappe.ui.form.on("Item", {
 	onload: function(frm) {
