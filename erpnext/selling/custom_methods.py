@@ -60,16 +60,13 @@ def cancel_batchwise_price_list(doc, method):
 #create supplier quotation from quotationin draft
 @frappe.whitelist()
 def create_supplier_quotation():
-	frappe.errprint("Supplier")
 	Quotations=get_quotation_in_draft()
 	if Quotations:
 		for quotation in Quotations:
-			if not frappe.db.get_value("Quotation Used",{"quotation":quotation[0]},"quotation"):
-				frappe.errprint(quotation)
+			if not frappe.db.get_value("Quotation Used",{"quotation":quotation[0]},"quotation"):			
 				items=frappe.db.sql("""select item_code,qty from `tabQuotation Item` where parent='%s'"""%(quotation[0]),as_list=1)
 				for item in items:
 					item_price_exists=frappe.db.sql("""select distinct ifnull(price_list_rate,0) from `tabItem Price` where item_code='%s' """%(item[0]))
-					frappe.errprint(item_price_exists)
 					if not item_price_exists or item_price_exists[0][0]==0:
 						suppliers=get_suplier_details(item[0])
 						if suppliers:
@@ -113,7 +110,7 @@ def new_supplier_quotaion(supplier,item):
 	item_wrapper = frappe.get_doc("Item", item[0])
 	sq=frappe.new_doc('Supplier Quotation')
 	sq.supplier=supplier
-	sq.append("quotation_items", {
+	sq.append("items", {
 						"doctype": "Supplier Quotation Item",
 						"item_code": item[0],
 						"item_name": item_wrapper.item_name,
@@ -146,7 +143,7 @@ def update_supplier_items(item,name):
 	sqi.base_rate=0
 	sqi.base_amount=0
 	sqi.item_group=item_wrapper.item_group
-	sqi.parentfield='quotation_items'
+	sqi.parentfield='items'
 	sqi.parenttype='Supplier Quotation'
 	sqi.parent=name
 	sqi.save(ignore_permissions=True)
@@ -173,7 +170,6 @@ def get_details(doc):
 	import json
 	doc = json.loads(doc)
 	condition=get_query(doc)
-	#frappe.errprint(condition)
 	result = frappe.db.sql(condition,as_list=1)
 	data = previous_ordered_status(doc, result)
 	return data
@@ -256,7 +252,6 @@ def get_tables(doc):
 def get_conditions(doc):
 	previous_ordered = condition = '1=1'
 	if doc.get('item_groups') and doc.get('part_no'):
-		frappe.errprint(doc.get('part_no'))
 		condition = """	`tabItem`.name='%s' and `tabWebsite Item Group`.item_group = '%s' """%(doc.get('part_no'),doc.get('item_groups'))
 	elif doc.get('item_groups'):
 		condition = """	`tabWebsite Item Group`.item_group = '%s' """%(doc.get('item_groups'))
@@ -283,19 +278,19 @@ def set_price_list(doc, method):
 #create purchase orders from submitted sales orders
 @frappe.whitelist()
 def generate_po():
-	frappe.errprint("po")
 	sales_orders=get_submitted_sales_orders()
 	if sales_orders:
 		for sales_order in sales_orders:
 			if not frappe.db.get_value("Sales Order Used",{"sales_order":sales_order[0]},"sales_order"): 
-				items=frappe.db.sql("""select item_code,qty from `tabSales Order Item` where parent='%s'"""%(sales_order[0]),as_list=1)
-				for item in items:
-					stock_balance=get_stock_balance(item[0])
-					if stock_balance and cint(stock_balance[0][0])==0:
-						supplier=get_supplier_details(item[0])
-						#frappe.errprint([item,supplier])
-						if supplier and supplier[0][1]:
-							make_po(supplier,item,sales_order[0])
+				doc = frappe.get_doc('Sales Order', sales_order[0])
+				for item in doc.get('items'):
+					if cint(frappe.db.get_value('Item', item.item_code, 'is_stock_item')) == 1:
+						stock_balance=get_stock_balance(item)
+						qty = (flt(item.qty) - flt(stock_balance[0][0])) or 0.0
+						if flt(qty) > 0.0:
+							supplier=get_supplier_details(item.item_code)
+							if supplier and supplier[0][1]:
+								make_po(supplier,item,sales_order[0], qty)
 				update_used(sales_order[0])
 
 
@@ -304,8 +299,10 @@ def get_submitted_sales_orders():
 	return frappe.db.sql("""select name from `tabSales Order` where docstatus=1""",as_list=1)
 
 #returns stock balance for item
-def get_stock_balance(item):
-	return frappe.db.sql("""select actual_qty from `tabBin` where item_code='%s'"""%(item),as_list=1)
+def get_stock_balance(args):
+	return frappe.db.sql("""select actual_qty from `tabBin` where item_code='{0}' 
+		and warehouse = '{1}'""".format(args.item_code, args.warehouse),as_list=1)
+
 #returns least item price list rate and supplier name
 def get_supplier_details(item):
 	return frappe.db.sql("""select min(price_list_rate),price_list from `tabItem Price` where item_code='%s' and buying=1 and price_list in (select name from tabSupplier) group by price_list order by price_list_rate limit 1"""%(item),as_list=1)
@@ -321,38 +318,40 @@ def get_sales_order_used(sales_order):
 	return frappe.db.sql("""select sales_order from `tabSales Order Used` where sales_order='%s'"""%(sales_order[0]),as_list=1)
 
 #makes new po or updates existing
-def make_po(supplier,item,sales_order):
+def make_po(supplier,item,sales_order, qty):
 	po_exists=check_po_exists(supplier[0][1])
 	#price_rate=get_price_list_rate(item[0],supplier[0][1])
 		
 	if po_exists:
-		item_exists=frappe.db.get_value('Purchase Order Item',{'item_code':item[0],'parent':po_exists},'name')
+		item_exists=frappe.db.get_value('Purchase Order Item',{'item_code':item.item_code,'parent':po_exists},'name')
 		if not item_exists:
-			add_po_items(po_exists,item,sales_order,supplier[0][0])
+			add_po_items(po_exists,item,sales_order,supplier[0][0], qty)
 		else:
-			update_qty(po_exists,item,sales_order,supplier[0][0])
+			update_qty(po_exists,item,sales_order,supplier[0][0], qty)
 	else:
-		new_po(supplier,item,supplier[0][0],sales_order)
+		new_po(supplier,item,supplier[0][0],sales_order, qty)
 
 #check if po exists
 def check_po_exists(supplier):
 	return frappe.db.get_value('Purchase Order',{'supplier':supplier,'docstatus':0},'name')
 
 #creates new purchase order
-def new_po(supplier,item,price_rate,sales_order):
-	item_wrapper=frappe.get_doc("Item", item[0])
+def new_po(supplier,item,price_rate,sales_order, qty):
+	item_wrapper=frappe.get_doc("Item", item.item_code)
 	po=frappe.new_doc('Purchase Order')
 	po.supplier=supplier[0][1]
+	po.currency = frappe.db.get_value('Supplier', supplier[0][1], 'default_currency') or frappe.db.get_value('Global Defaults', None, 'default_currency')
+	po.plc_conversion_rate = frappe.db.get_value('Currency Exchange', {'from_currency': po.currency}, 'exchange_rate')
 	po.buying_price_list=supplier[0][1]
-	po.append("po_details", {
+	po.append("items", {
 					"doctype": "Purchase Order Item",
-					"item_code": item[0],
+					"item_code": item.item_code,
 					"item_name": item_wrapper.item_name,
 					"description": item_wrapper.description,
 					"uom": item_wrapper.stock_uom,
 					"item_group": item_wrapper.item_group,
 					"brand": item_wrapper.brand,
-					"qty":item[1] ,
+					"qty":qty ,
 					"base_rate":0,
 					"base_amount":0,
 					"manufacturer_pn":item_wrapper.manufacturer_pn,
@@ -376,30 +375,30 @@ def update_used(sales_order):
 		sopo.save(ignore_permissions=True)
 
 #update qty if item in purchase order exists
-def update_qty(name,item,sales_order,price_rate):
-	frappe.db.sql("""update `tabPurchase Order Item` set qty=qty+%s where parent='%s' and item_code='%s'"""%(item[1],name,item[0]))
+def update_qty(name,item,sales_order,price_rate, qty):
+	frappe.db.sql("""update `tabPurchase Order Item` set qty=qty+%s where parent='%s' and item_code='%s'"""%(qty,name,item.item_code))
 	
 #update purchase order with item
-def add_po_items(name,item,sales_order,price_rate):
+def add_po_items(name,item,sales_order,price_rate, qty):
 	idx=frappe.db.sql("""select ifnull(max(idx),0)+1 as idx from `tabPurchase Order Item` where parent='%s'"""%(name),as_list=1)
-	item_wrapper = frappe.get_doc("Item", item[0])
+	item_wrapper = frappe.get_doc("Item", item.item_code)
 	poi=frappe.new_doc('Purchase Order Item')
 	poi.idx=idx[0][0]
-	poi.item_code=item[0]
+	poi.item_code=item.item_code
 	poi.item_name=item_wrapper.item_name
 	poi.description=item_wrapper.description
 	poi.manufacturer_pn=item_wrapper.manufacturer_pn
 	poi.oem_part_number=item_wrapper.oem_part_number
 	poi.uom=item_wrapper.stock_uom
 	poi.brand=item_wrapper.brand
-	poi.qty=item[1]
+	poi.qty= qty
 	poi.price_list_rate=price_rate
 	poi.base_rate=0
 	poi.base_amount=0
 	poi.schedule_date='08-12-2014'
 	poi.conversion_factor=1
 	poi.item_group=item_wrapper.item_group
-	poi.parentfield='po_details'
+	poi.parentfield='items'
 	poi.parenttype='Purchase Order'
 	poi.parent=name
 	poi.save(ignore_permissions=True)
