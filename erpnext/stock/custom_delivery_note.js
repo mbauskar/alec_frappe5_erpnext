@@ -106,7 +106,7 @@ cur_frm.cscript.get_alternative_items= function(doc,cdt,cdn){
     }
 }
 
-frappe.ui.form.on("Delivery Note Items", "item_code", function(doc, cdt, cdn) {
+frappe.ui.form.on("Delivery Note Item", "item_code", function(doc, cdt, cdn) {
     var d = locals[cdt][cdn]
     d.sales_item_name = d.item_code
     refresh_field('sales_item_name')
