@@ -8,7 +8,7 @@ frappe.provide("erpnext.stock.delivery_note");
 erpnext.stock.DeliveryNoteController = erpnext.selling.SellingController.extend({
 	refresh: function(doc, dt, dn) {
 		this._super();
-		
+
 		if (!doc.is_return) {
 			if(doc.__onload && !doc.__onload.billing_complete && doc.docstatus==1) {
 				// show Make Invoice button only if Delivery Note is not created from Sales Invoice
@@ -51,15 +51,15 @@ erpnext.stock.DeliveryNoteController = erpnext.selling.SellingController.extend(
 					});
 			}
 		}
-		
+
 		if (doc.docstatus==1) {
 			this.show_stock_ledger();
 			if (cint(frappe.defaults.get_default("auto_accounting_for_stock"))) {
 				this.show_general_ledger();
 			}
 		}
-		
-			
+
+
 
 		erpnext.stock.delivery_note.set_print_hide(doc, dt, dn);
 
@@ -81,7 +81,7 @@ erpnext.stock.DeliveryNoteController = erpnext.selling.SellingController.extend(
 			frm: cur_frm
 		});
 	},
-	
+
 	make_sales_return: function() {
 		frappe.model.open_mapped_doc({
 			method: "erpnext.stock.doctype.delivery_note.delivery_note.make_sales_return",
@@ -112,7 +112,7 @@ cur_frm.cscript.new_contact = function(){
 
 
 cur_frm.cscript.validate = function(doc, cdt, cdn){
-	
+
 		setTimeout(function(){
       refresh_field(['sales_item_name','delivery_note_item'])},2000)
 }
@@ -267,4 +267,4 @@ if (sys_defaults.auto_accounting_for_stock) {
 }
 
 {% include 'stock/custom_delivery_note.js' %}
-cur_frm.script_manager.make(erpnext.stock.CustomDeliveryNote);
+// cur_frm.script_manager.make(erpnext.stock.CustomDeliveryNote);

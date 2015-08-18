@@ -2,9 +2,6 @@ erpnext.stock.CustomDeliveryNote = erpnext.stock.DeliveryNoteController.extend({
   init:function(doc,dt,dn){
     this.doc = doc
   }
-
-
- 
 });
 
 cur_frm.cscript.get_alternative_items= function(doc,cdt,cdn){
@@ -55,7 +52,7 @@ cur_frm.cscript.get_alternative_items= function(doc,cdt,cdn){
                               $("<td class='row' style='height:15px;text-align:center'>").html(''+val["item_code"]+'').appendTo(row);
                               $("<td class='row' align='center' style='height:15px'>").html(''+val["actual_qty"]+'').appendTo(row);
                           })
-                              
+
                         }
                         /*else{
                           $('<div><b>Alternative Items for '+i+'</b></div></br><div><h5>There is no Stock available of any Equivalent Item</h5></div>').appendTo($(fd.alt_item_name.wrapper))
@@ -66,13 +63,13 @@ cur_frm.cscript.get_alternative_items= function(doc,cdt,cdn){
                   $(".btn-primary").css("width","100px")
                   $(".empty-form-alert").remove();
                   dialog.show();
-                  
+
                   $("input[name='sp']").change(function () {
                         alter_dic[$(this).attr('id')]={"item_code":$(this).closest('td').attr("item"),"qty":$(this).closest('td').attr("qty"),"item_name":$(this).closest('td').attr("item_name"),"manufacturer_pn":$(this).closest('td').attr("manufacturer_pn"),"oem_part_number":$(this).closest('td').attr("oem_part_number"),"description":$(this).closest('td').attr("description"),"warehouse":$(this).closest('td').attr("warehouse"),"stock_uom":$(this).closest('td').attr("stock_uom")}
                   })
-              
+
                   $(fd.get_item_details.input).click(function(){
-                        
+
                        $.each(doc.items,function(i,d){
                             if (alter_dic[d.item_code]){
                                 original_item=d.item_code
@@ -87,27 +84,45 @@ cur_frm.cscript.get_alternative_items= function(doc,cdt,cdn){
                                 d.sales_item_name = d.item_code
                                 if (alter_dic[original_item]["qty"] < d.qty){
                                   d.actual_qty =alter_item["qty"]
-                                }                    
+                                }
                                 if (alter_item["oem_part_number"] !=  d.old_oem){
-                                  d.oem_part_number = alter_item["oem_part_number"]+"(Same as "+(d.old_oem)+")"                          
+                                  d.oem_part_number = alter_item["oem_part_number"]+"(Same as "+(d.old_oem)+")"
                                 }
                                 else{
                                   d.oem_part_number = alter_item["oem_part_number"]
                                 }
-                              
+
                           }
-                      }) 
+                      })
                     dialog.hide()
-                    refresh_field('items') 
-                    cur_frm.save()       
-                }) 
+                    refresh_field('items')
+                    cur_frm.save()
+                })
           }
       })
     }
 }
 
-frappe.ui.form.on("Delivery Note Items", "item_code", function(doc, cdt, cdn) {
+frappe.ui.form.on("Delivery Note Item", "item_code", function(doc, cdt, cdn) {
     var d = locals[cdt][cdn]
     d.sales_item_name = d.item_code
     refresh_field('sales_item_name')
 });
+{% include 'frappe_subscription/frappe_subscription/delivery_note.js' %}
+//
+// cur_frm.cscript.get_packing_details = function(doc,cdt,cdn){
+//     return frappe.call({
+//         method: "frappe_subscription.bin_packing.get_bin_packing_details",
+//         args:{
+//             delivery_note:doc.name,
+//             // items:doc.items
+//         },
+//         callback: function(r){
+//             if(!r.exc) {
+//                 // refresh_field("packing_slip_details");
+//                 cur_frm.reload_doc();
+//                 frappe.msgprint("Packing Slip Created");
+//             }
+//         }
+//     });
+// }

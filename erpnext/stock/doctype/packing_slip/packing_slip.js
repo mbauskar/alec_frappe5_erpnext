@@ -124,3 +124,5 @@ cur_frm.pformat.net_weight_pkg= function(doc){
 cur_frm.pformat.gross_weight_pkg= function(doc){
 	return '<table style="width:100%">' + make_row('Gross Weight', doc.gross_weight_pkg) + '</table>'
 }
+
+{% include 'frappe_subscription/frappe_subscription/packing_slip.js' %}

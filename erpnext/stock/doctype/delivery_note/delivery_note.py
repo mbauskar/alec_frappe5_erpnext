@@ -261,11 +261,6 @@ class DeliveryNote(SellingController):
 
 		self.make_sl_entries(sl_entries)
 
-	def get_packing_details(self):
-		from frappe_subscription.bin_packing import get_bin_packing_details
-		frappe.errprint("get_packing_details")
-		self.items = get_bin_packing_details(self.items)
-
 def get_list_context(context=None):
 	from erpnext.controllers.website_list_for_contact import get_list_context
 	list_context = get_list_context(context)
