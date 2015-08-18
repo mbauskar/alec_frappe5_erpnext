@@ -152,7 +152,9 @@ $.extend(cur_frm.cscript, {
 			method: "erpnext.manufacturing.doctype.production_order.production_order.get_item_details",
 			args: { item: doc.production_item },
 			callback: function(r) {
-				cur_frm.set_value(r.message);
+				$.each(["description", "stock_uom", "bom_no"], function(i, field) {
+					cur_frm.set_value(field, r.message[field]);
+				});
 			}
 		});
 	},
@@ -160,7 +162,7 @@ $.extend(cur_frm.cscript, {
 	make_se: function(purpose) {
 		var me = this;
 		var max = (purpose === "Manufacture") ?
-			flt(this.frm.doc.qty) - flt(this.frm.doc.produced_qty) :
+			flt(this.frm.doc.material_transferred_for_manufacturing) - flt(this.frm.doc.produced_qty) :
 			flt(this.frm.doc.qty) - flt(this.frm.doc.material_transferred_for_manufacturing);
 
 		frappe.prompt({fieldtype:"Int", label: __("Qty for {0}", [purpose]), fieldname:"qty",
@@ -187,8 +189,8 @@ $.extend(cur_frm.cscript, {
 
 	bom_no: function() {
 		return this.frm.call({
-		doc: this.frm.doc,
-		method: "set_production_order_operations"
+			doc: this.frm.doc,
+			method: "set_production_order_operations"
 		});
 	},
 

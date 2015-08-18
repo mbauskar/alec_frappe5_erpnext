@@ -5,7 +5,7 @@ app_publisher = "Frappe Technologies Pvt. Ltd. and Contributors"
 app_description = "Open Source Enterprise Resource Planning for Small and Midsized Organizations"
 app_icon = "icon-th"
 app_color = "#e74c3c"
-app_version = "5.5.0"
+app_version = "5.5.1"
 github_link = "https://github.com/frappe/erpnext"
 
 error_report_email = "support@erpnext.com"
@@ -112,9 +112,7 @@ scheduler_events = {
 		"erpnext.setup.doctype.email_digest.email_digest.send",
 		"erpnext.support.doctype.issue.issue.auto_close_tickets",
 		"erpnext.accounts.doctype.fiscal_year.fiscal_year.auto_create_fiscal_year",
-		"erpnext.hr.doctype.employee.employee.send_birthday_reminders",
-		"erpnext.selling.custom_methods.generate_po",
-		"erpnext.selling.custom_methods.create_supplier_quotation"
+		"erpnext.hr.doctype.employee.employee.send_birthday_reminders"
 	],
 	"daily_long": [
 		"erpnext.setup.doctype.backup_manager.backup_manager.take_backups_daily"
