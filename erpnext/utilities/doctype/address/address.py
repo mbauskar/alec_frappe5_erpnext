@@ -26,7 +26,6 @@ class Address(Document):
 
 	def validate_primary_address(self):
 		"""Validate that there can only be one primary address for particular customer, supplier"""
-		frappe.errprint(self.link_fields)
 		if self.is_primary_address == 1:
 			self._unset_other("is_primary_address")
 
