@@ -1,0 +1,17 @@
+{
+ "creation": "2015-08-26 06:38:57.669718", 
+ "custom_format": 1, 
+ "disabled": 0, 
+ "doc_type": "Packing Slip", 
+ "docstatus": 0, 
+ "doctype": "Print Format", 
+ "font": "Default", 
+ "html": "{{ letter_head }}\n<br>\n{% if doc.docstatus == 1 %}\n<div align=\"center\"><h3>Box Packing Information</h3></div>\n<hr style=\"margin-top: 0px;\">\n<div class=\"row\">\n    <div class=\"col-xs-6\">\n        <div class=\"row\">\n            <div class=\"col-xs-12\" align=\"center\">\n                <table class=\"table table-bordered\">\n                    <tr>\n                        <td colspan=\"2\" align=\"center\"><b>Items To Pack</b></th>\n                    </tr>\n                    <tr>\n                        <th>Item Code</th>\n                        <th>Qty</th>\n                    </tr>\n                    {% for item in doc.items %}\n                    <tr>\n                        <td>{{ item.item_code or \"\" }}</td>\n                        <td>{{ item.qty or \"\"}}</td>\n                    </tr>\n                    {% endfor %}\n                </table>\n            </div>\n        </div>\n    </div>\n    <div class=\"col-xs-6\">\n        <div class=\"row\">\n            <div class=\"col-xs-6\"><b>Packing Slip</b></div>\n            <div class=\"col-xs-6\">{{doc.name or \"\"}}</div>\n        </div>\n        <div class=\"row\">\n            <div class=\"col-xs-6\"><b>Box/Package Used</b></div>\n            <div class=\"col-xs-6\"><b>{{doc.package_used or \"\"}}</b></div>\n        </div>\n        <div class=\"row\">\n            <div class=\"col-xs-6\"><b>Package Number</b></div>\n            <div class=\"col-xs-6\">{{doc.from_case_no or \"\"}}</div>\n        </div>\n        <div class=\"row\">\n            <div class=\"col-xs-6\"><b>Net Weight</b></div>\n            <div class=\"col-xs-6\">{{doc.net_weight_pkg or \"\"}}</div>\n        </div>\n        <div class=\"row\">\n            <div class=\"col-xs-6\"><b>Gross Weight</b></div>\n            <div class=\"col-xs-6\">{{doc.gross_weight_pkg or \"\"}}</div>\n        </div>\n    </div>\n</div>\n<hr style=\"margin-top: 0px;\">\n{{doc.bin_packing_info or \"\"}}\n{% endif%}", 
+ "modified": "2015-08-26 10:13:35.881483", 
+ "modified_by": "Administrator", 
+ "name": "Bin Packing", 
+ "owner": "Administrator", 
+ "print_format_builder": 0, 
+ "print_format_type": "Server", 
+ "standard": "Yes"
+}
