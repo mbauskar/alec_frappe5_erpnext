@@ -29,7 +29,7 @@ erpnext.selling.SalesOrderController = erpnext.selling.SellingController.extend(
 				if(flt(doc.per_billed, 2) < 100) {
 					cur_frm.add_custom_button(__('Make Invoice'), this.make_sales_invoice);
 				}
-				cur_frm.add_custom_button(__('Make Oppurtunity'), cur_frm.cscript.make_oppurtunity);
+				cur_frm.add_custom_button(__('Make Opportunity'), cur_frm.cscript.make_oppurtunity);
 
 				frappe.call({
 					method:"erpnext.selling.custom_methods.get_roles_for_so_cancellation",
@@ -45,9 +45,9 @@ erpnext.selling.SalesOrderController = erpnext.selling.SellingController.extend(
 							  		cur_frm.add_custom_button(__('Cancel for Exchange and Return'),cur_frm.cscript['cancel_sales_order'],"icon-folder-close")
 							  		return false;
 
-								  }		
+								  }
 							})
-					    }  
+					    }
 				})
 
 				// stop
@@ -208,4 +208,3 @@ cur_frm.cscript.on_submit = function(doc, cdt, cdn) {
 
 {% include 'selling/custom_so_cancel.js' %}
 cur_frm.script_manager.make(erpnext.selling.CustomSoCancel);
-
