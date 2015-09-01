@@ -50,7 +50,7 @@ def get_item_details(args):
 	get_price_list_rate(args, item_doc, out)
 
 	if args.transaction_type == "selling" and cint(args.is_pos):
-		out.update(get_pos_profiles_item_details(args.company, args))
+		out.update(get_pos_profile_item_details(args.company, args))
 
 	# update args with out, if key or value not exists
 	for key, value in out.iteritems():
@@ -260,6 +260,10 @@ def validate_price_list(args):
 def validate_conversion_rate(args, meta):
 	from erpnext.controllers.accounts_controller import validate_conversion_rate
 
+	if (not args.conversion_rate
+		and args.currency==frappe.db.get_value("Company", args.company, "default_currency")):
+		args.conversion_rate = 1.0
+
 	# validate currency conversion rate
 	validate_conversion_rate(args.currency, args.conversion_rate,
 		meta.get_label("conversion_rate"), args.company)
@@ -287,16 +291,16 @@ def get_party_item_code(args, item_doc, out):
 		item_supplier = item_doc.get("supplier_items", {"supplier": args.supplier})
 		out.supplier_part_no = item_supplier[0].supplier_part_no if item_supplier else None
 
-def get_pos_profiles_item_details(company, args, pos_profiles=None):
+def get_pos_profile_item_details(company, args, pos_profile=None):
 	res = frappe._dict()
 
-	if not pos_profiles:
-		pos_profiles = get_pos_profiles(company)
+	if not pos_profile:
+		pos_profile = get_pos_profile(company)
 
-	if pos_profiles:
+	if pos_profile:
 		for fieldname in ("income_account", "cost_center", "warehouse", "expense_account"):
-			if not args.get(fieldname) and pos_profiles.get(fieldname):
-				res[fieldname] = pos_profiles.get(fieldname)
+			if not args.get(fieldname) and pos_profile.get(fieldname):
+				res[fieldname] = pos_profile.get(fieldname)
 
 		if res.get("warehouse"):
 			res.actual_qty = get_available_qty(args.item_code,
@@ -304,15 +308,16 @@ def get_pos_profiles_item_details(company, args, pos_profiles=None):
 
 	return res
 
-def get_pos_profiles(company):
-	pos_profiles = frappe.db.sql("""select * from `tabPOS Profile` where user = %s
+@frappe.whitelist()
+def get_pos_profile(company):
+	pos_profile = frappe.db.sql("""select * from `tabPOS Profile` where user = %s
 		and company = %s""", (frappe.session['user'], company), as_dict=1)
 
-	if not pos_profiles:
-		pos_profiles = frappe.db.sql("""select * from `tabPOS Profile`
+	if not pos_profile:
+		pos_profile = frappe.db.sql("""select * from `tabPOS Profile`
 			where ifnull(user,'') = '' and company = %s""", company, as_dict=1)
 
-	return pos_profiles and pos_profiles[0] or None
+	return pos_profile and pos_profile[0] or None
 
 
 def get_serial_nos_by_fifo(args, item_doc):
@@ -404,7 +409,6 @@ def apply_price_list_on_item(args):
 	item_details = frappe._dict()
 	item_doc = frappe.get_doc("Item", args.item_code)
 	get_price_list_rate(args, item_doc, item_details)
-	item_details.discount_percentage = 0.0
 	item_details.update(get_pricing_rule_for_item(args))
 	return item_details
 

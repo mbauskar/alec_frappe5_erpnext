@@ -41,8 +41,8 @@ class PurchaseInvoice(BuyingController):
 			self.po_required()
 			self.pr_required()
 			self.validate_supplier_invoice()
-			self.validate_advance_jv("advances", "purchase_order")
-			
+			self.validate_advance_jv("Purchase Order")
+
 		self.check_active_purchase_items()
 		self.check_conversion_rate()
 		self.validate_credit_to_acc()
@@ -91,8 +91,12 @@ class PurchaseInvoice(BuyingController):
 			throw(_("Conversion rate cannot be 0 or 1"))
 
 	def validate_credit_to_acc(self):
-		account_type = frappe.db.get_value("Account", self.credit_to, "account_type")
-		if account_type != "Payable":
+		account = frappe.db.get_value("Account", self.credit_to, ["account_type", "report_type"], as_dict=True)
+
+		if account.report_type != "Balance Sheet":
+			frappe.throw(_("Credit To account must be a Balance Sheet account"))
+
+		if self.supplier and account.account_type != "Payable":
 			frappe.throw(_("Credit To account must be a Payable account"))
 
 	def check_for_stopped_status(self):
@@ -127,7 +131,7 @@ class PurchaseInvoice(BuyingController):
 			}
 		})
 
-		if cint(frappe.db.get_single_value('Buying Settings', 'maintain_same_rate')):
+		if cint(frappe.db.get_single_value('Buying Settings', 'maintain_same_rate')) and not self.is_return:
 			self.validate_rate_with_reference_doc([
 				["Purchase Order", "purchase_order", "po_detail"],
 				["Purchase Receipt", "purchase_receipt", "pr_detail"]
@@ -233,7 +237,7 @@ class PurchaseInvoice(BuyingController):
 			self.update_against_document_in_jv()
 			self.update_prevdoc_status()
 			self.update_billing_status_for_zero_amount_refdoc("Purchase Order")
-			
+
 		self.update_project()
 
 	def make_gl_entries(self):
@@ -365,7 +369,7 @@ class PurchaseInvoice(BuyingController):
 	def on_cancel(self):
 		if not self.is_return:
 			from erpnext.accounts.utils import remove_against_link_from_jv
-			remove_against_link_from_jv(self.doctype, self.name, "against_voucher")
+			remove_against_link_from_jv(self.doctype, self.name)
 
 			self.update_prevdoc_status()
 			self.update_billing_status_for_zero_amount_refdoc("Purchase Order")

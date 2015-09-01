@@ -13,6 +13,7 @@ from erpnext.stock.doctype.item.item import validate_end_of_life
 from erpnext.manufacturing.doctype.workstation.workstation import WorkstationHolidayError, NotInWorkingHoursError
 from erpnext.projects.doctype.time_log.time_log import OverlapError
 from erpnext.stock.doctype.stock_entry.stock_entry import get_additional_costs
+from erpnext.manufacturing.doctype.manufacturing_settings.manufacturing_settings import get_mins_between_operations
 
 class OverProductionError(frappe.ValidationError): pass
 class StockOverProductionError(frappe.ValidationError): pass
@@ -41,6 +42,8 @@ class ProductionOrder(Document):
 		self.validate_warehouse()
 		self.calculate_operating_cost()
 		self.validate_delivery_date()
+		self.validate_qty()
+		self.validate_operation_time()
 
 		from erpnext.utilities.transaction_base import validate_uom_is_integer
 		validate_uom_is_integer(self, "stock_uom", ["qty", "produced_qty"])
@@ -106,6 +109,7 @@ class ProductionOrder(Document):
 		qty = (flt(self.qty)-flt(self.produced_qty)) * ((status == 'Stopped') and -1 or 1)
 		self.update_planned_qty(qty)
 		frappe.msgprint(_("Production Order status is {0}").format(status))
+		self.notify_modified()
 
 
 	def update_status(self, status=None):
@@ -231,6 +235,7 @@ class ProductionOrder(Document):
 			original_start_time = time_log.from_time
 			while True:
 				_from_time = time_log.from_time
+
 				try:
 					time_log.save()
 					break
@@ -248,6 +253,7 @@ class ProductionOrder(Document):
 					frappe.msgprint(_("Unable to find Time Slot in the next {0} days for Operation {1}").format(plan_days, d.operation))
 					break
 
+				# if time log needs to be moved, make sure that the from time is not the same
 				if _from_time == time_log.from_time:
 					frappe.throw("Capacity Planning Error")
 
@@ -273,18 +279,12 @@ class ProductionOrder(Document):
 				d.planned_start_time = self.planned_start_date
 			else:
 				d.planned_start_time = get_datetime(self.operations[i-1].planned_end_time)\
-					+ self.get_mins_between_operations()
+					+ get_mins_between_operations()
 
 			d.planned_end_time = get_datetime(d.planned_start_time) + relativedelta(minutes = d.time_in_mins)
 
 			if d.planned_start_time == d.planned_end_time:
 				frappe.throw(_("Capacity Planning Error"))
-
-	def get_mins_between_operations(self):
-		if not hasattr(self, "_mins_between_operations"):
-			self._mins_between_operations = cint(frappe.db.get_single_value("Manufacturing Settings",
-				"mins_between_operations")) or 10
-		return relativedelta(minutes=self._mins_between_operations)
 
 	def check_operation_fits_in_working_hours(self, d):
 		"""Raises expection if operation is longer than working hours in the given workstation."""
@@ -329,6 +329,15 @@ class ProductionOrder(Document):
 			frappe.throw(_("Production Order cannot be raised against a Item Template"), ItemHasVariantError)
 
 		validate_end_of_life(self.production_item)
+		
+	def validate_qty(self):
+		if not self.qty > 0:
+			frappe.throw(_("Quantity to Manufacture must be greater than 0."))
+			
+	def validate_operation_time(self):
+		for d in self.operations:
+			if not d.time_in_mins > 0:
+				frappe.throw(_("Operation Time must be greater than 0 for Operation {0}".format(d.operation))) 
 
 @frappe.whitelist()
 def get_item_details(item):
@@ -413,3 +422,9 @@ def make_time_log(name, operation, from_time=None, to_time=None, qty=None,  proj
 	if from_time and to_time :
 		time_log.calculate_total_hours()
 	return time_log
+
+@frappe.whitelist()
+def get_default_warehouse():
+	wip_warehouse = frappe.db.get_single_value("Manufacturing Settings", "default_wip_warehouse")
+	fg_warehouse = frappe.db.get_single_value("Manufacturing Settings", "default_fg_warehouse")
+	return {"wip_warehouse": wip_warehouse, "fg_warehouse": fg_warehouse}

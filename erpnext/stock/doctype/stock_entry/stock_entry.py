@@ -80,7 +80,8 @@ class StockEntry(StockController):
 		for item in self.get("items"):
 			if not flt(item.qty):
 				frappe.throw(_("Row {0}: Qty is mandatory").format(item.idx))
-
+			if not flt(item.conversion_factor):
+				frappe.throw(_("Row {0}: UOM Conversion Factor is mandatory").format(item.idx))
 			item.transfer_qty = flt(item.qty * item.conversion_factor, self.precision("transfer_qty", item))
 
 	def validate_item(self):
@@ -98,7 +99,7 @@ class StockEntry(StockController):
 					if f in ["stock_uom", "conversion_factor"] or not item.get(f):
 						item.set(f, item_details.get(f))
 
-			if self.difference_account:
+			if self.difference_account and not item.expense_account:
 				item.expense_account = self.difference_account
 
 			if not item.transfer_qty:
@@ -231,6 +232,10 @@ class StockEntry(StockController):
 				frappe.throw(_("""Row {0}: Qty not avalable in warehouse {1} on {2} {3}.
 					Available Qty: {4}, Transfer Qty: {5}""").format(d.idx, d.s_warehouse,
 					self.posting_date, self.posting_time, d.actual_qty, d.transfer_qty), NegativeStockError)
+					
+	def get_stock_and_rate(self):
+		self.set_actual_qty()
+		self.calculate_rate_and_amount()
 
 	def calculate_rate_and_amount(self, force=False):
 		self.set_basic_rate(force)
@@ -273,7 +278,7 @@ class StockEntry(StockController):
 			for d in self.get("items"):
 				if d.bom_no or (d.t_warehouse and number_of_fg_items == 1):
 					d.basic_rate = flt(raw_material_cost / flt(d.transfer_qty), d.precision("basic_rate"))
-					d.basic_amount = flt(flt(d.basic_rate) * flt(d.transfer_qty), d.precision("basic_amount"))
+					d.basic_amount = flt(raw_material_cost, d.precision("basic_amount"))
 					
 	def distribute_additional_costs(self):
 		if self.purpose == "Material Issue":

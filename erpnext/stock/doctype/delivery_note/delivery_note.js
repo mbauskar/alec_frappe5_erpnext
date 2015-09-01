@@ -14,22 +14,22 @@ erpnext.stock.DeliveryNoteController = erpnext.selling.SellingController.extend(
 				// show Make Invoice button only if Delivery Note is not created from Sales Invoice
 				var from_sales_invoice = false;
 				from_sales_invoice = cur_frm.doc.items.some(function(item) {
-						return item.against_sales_invoice ? true : false;
-					});
+					return item.against_sales_invoice ? true : false;
+				});
 
 				if(!from_sales_invoice)
-					cur_frm.add_custom_button(__('Make Invoice'), this.make_sales_invoice);
+					cur_frm.add_custom_button(__('Invoice'), this.make_sales_invoice).addClass("btn-primary");
 			}
 
 			if(flt(doc.per_installed, 2) < 100 && doc.docstatus==1)
-				cur_frm.add_custom_button(__('Make Installation Note'), this.make_installation_note);
+				cur_frm.add_custom_button(__('Installation Note'), this.make_installation_note);
 
 			if (doc.docstatus==1) {
-				cur_frm.add_custom_button(__('Make Sales Return'), this.make_sales_return);
+				cur_frm.add_custom_button(__('Sales Return'), this.make_sales_return);
 			}
 
 			if(doc.docstatus==0 && !doc.__islocal) {
-				cur_frm.add_custom_button(__('Make Packing Slip'),
+				cur_frm.add_custom_button(__('Packing Slip'),
 					cur_frm.cscript['Make Packing Slip'], frappe.boot.doctype_icons["Packing Slip"]);
 			}
 
