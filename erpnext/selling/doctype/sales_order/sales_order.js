@@ -2,6 +2,7 @@
 // License: GNU General Public License v3. See license.txt
 
 {% include 'selling/sales_common.js' %}
+{% include 'frappe_subscription/frappe_subscription/ec_sales_order.js' %}
 
 erpnext.selling.SalesOrderController = erpnext.selling.SellingController.extend({
 	refresh: function(doc, dt, dn) {
