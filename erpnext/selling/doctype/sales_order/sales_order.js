@@ -2,7 +2,6 @@
 // License: GNU General Public License v3. See license.txt
 
 {% include 'selling/sales_common.js' %}
-{% include 'frappe_subscription/frappe_subscription/ec_sales_order.js' %}
 
 frappe.ui.form.on("Sales Order", {
 	onload: function(frm) {
@@ -233,4 +232,5 @@ cur_frm.cscript.on_submit = function(doc, cdt, cdn) {
 };
 
 {% include 'selling/custom_so_cancel.js' %}
+{% include 'frappe_subscription/frappe_subscription/ec_sales_order.js' %}
 cur_frm.script_manager.make(erpnext.selling.CustomSoCancel);
