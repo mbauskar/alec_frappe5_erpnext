@@ -63,7 +63,7 @@ def create_supplier_quotation():
 	Quotations=get_quotation_in_draft()
 	if Quotations:
 		for quotation in Quotations:
-			if not frappe.db.get_value("Quotation Used",{"quotation":quotation[0]},"quotation"):			
+			if not frappe.db.get_value("Quotation Used",{"quotation":quotation[0]},"quotation"):
 				items=frappe.db.sql("""select item_code,qty from `tabQuotation Item` where parent='%s'"""%(quotation[0]),as_list=1)
 				for item in items:
 					item_price_exists=frappe.db.sql("""select distinct ifnull(price_list_rate,0) from `tabItem Price` where item_code='%s' """%(item[0]))
@@ -85,7 +85,7 @@ def get_quotation_used(quotation):
 #get details of supplier
 def get_suplier_details(item):
 	item_wrapper = frappe.get_doc("Item", item)
-	return frappe.db.sql("""select supplier_name from `tabSupplier` where supplier_name in(select parent from `tabSupplier Brands` where brand='%s') and 
+	return frappe.db.sql("""select supplier_name from `tabSupplier` where supplier_name in(select parent from `tabSupplier Brands` where brand='%s') and
 		supplier_name in(select parent from `tabSupplier Item Groups` where item_group='%s')"""%(item_wrapper.brand,item_wrapper.item_group),as_list=1)
 
 
@@ -101,7 +101,7 @@ def make_supplier_quotation(item,supplier):
 		new_supplier_quotaion(supplier,item)
 
 
-#check if quotation exists in for supplier 
+#check if quotation exists in for supplier
 def check_quotation_exists(supplier):
 	return frappe.db.get_value('Supplier Quotation',{'supplier':supplier,'docstatus':0},'name')
 
@@ -122,7 +122,7 @@ def new_supplier_quotaion(supplier,item):
 						"base_rate":0,
 						"base_amount":0,
 						"manufacturer_pn":item_wrapper.manufacturer_pn,
-						"oem_part_number":item_wrapper.oem_part_number						
+						"oem_part_number":item_wrapper.oem_part_number
 						})
 	sq.save(ignore_permissions=True)
 
@@ -193,9 +193,9 @@ def previous_ordered_status(doc, result):
 @frappe.whitelist()
 def get_status(doc, item):
 	data = 0
-	status = frappe.db.sql(""" select ifnull(`tabSales Order`.docstatus,0) from `tabSales Order`, `tabSales Order Item` where `tabSales Order`.name= `tabSales Order Item`.parent 
-		and `tabSales Order`.customer='%s' 
-		and `tabSales Order Item`.item_code='%s' 
+	status = frappe.db.sql(""" select ifnull(`tabSales Order`.docstatus,0) from `tabSales Order`, `tabSales Order Item` where `tabSales Order`.name= `tabSales Order Item`.parent
+		and `tabSales Order`.customer='%s'
+		and `tabSales Order Item`.item_code='%s'
 		and `tabSales Order`.docstatus=1 """%(doc.get('customer'),item))
 	if status:
 		data = 1
@@ -230,19 +230,19 @@ def get_tables(doc):
 	table = """ `tabItem` INNER JOIN `tabQuote Item` ON
    		`tabQuote Item`.parent = `tabItem`.name """
 	if doc.get('item_groups') and doc.get('part_no'):
-		table = """ `tabItem` INNER JOIN `tabQuote Item` ON 
-		`tabQuote Item`.parent = `tabItem`.name INNER JOIN 
+		table = """ `tabItem` INNER JOIN `tabQuote Item` ON
+		`tabQuote Item`.parent = `tabItem`.name INNER JOIN
 		`tabWebsite Item Group` ON `tabQuote Item`.parent = `tabWebsite Item Group`.parent """
 	elif doc.get('item_groups'):
 		table = """ `tabWebsite Item Group` INNER JOIN `tabQuote Item` ON
    		`tabQuote Item`.parent = `tabWebsite Item Group`.parent"""
 
-   	return """  FROM """+table+""" LEFT JOIN 
+   	return """  FROM """+table+""" LEFT JOIN
 			   		`tabItem Price` ON `tabQuote Item`.item_code = `tabItem Price`.item_code
 				LEFT JOIN
 			    	`tabStock Ledger Entry` ON `tabStock Ledger Entry`.item_code = `tabItem Price`.item_code and `tabStock Ledger Entry`.is_cancelled='No'
-				LEFT JOIN 
-					`tabBatchwise Purchase Rate` ON `tabBatchwise Purchase Rate`.parent = `tabItem Price`.name 
+				LEFT JOIN
+					`tabBatchwise Purchase Rate` ON `tabBatchwise Purchase Rate`.parent = `tabItem Price`.name
 				LEFT JOIN
 			    	`tabSales Order Item` ON `tabSales Order Item`.item_code = `tabQuote Item`.item_code
 				LEFT JOIN
@@ -281,7 +281,7 @@ def generate_po():
 	sales_orders=get_submitted_sales_orders()
 	if sales_orders:
 		for sales_order in sales_orders:
-			if not frappe.db.get_value("Sales Order Used",{"sales_order":sales_order[0]},"sales_order"): 
+			if not frappe.db.get_value("Sales Order Used",{"sales_order":sales_order[0]},"sales_order"):
 				doc = frappe.get_doc('Sales Order', sales_order[0])
 				for item in doc.get('items'):
 					if cint(frappe.db.get_value('Item', item.item_code, 'is_stock_item')) == 1:
@@ -300,7 +300,7 @@ def get_submitted_sales_orders():
 
 #returns stock balance for item
 def get_stock_balance(args):
-	return frappe.db.sql("""select actual_qty from `tabBin` where item_code='{0}' 
+	return frappe.db.sql("""select actual_qty from `tabBin` where item_code='{0}'
 		and warehouse = '{1}'""".format(args.item_code, args.warehouse),as_list=1)
 
 #returns least item price list rate and supplier name
@@ -321,7 +321,7 @@ def get_sales_order_used(sales_order):
 def make_po(supplier,item,sales_order, qty):
 	po_exists=check_po_exists(supplier[0][1])
 	#price_rate=get_price_list_rate(item[0],supplier[0][1])
-		
+
 	if po_exists:
 		item_exists=frappe.db.get_value('Purchase Order Item',{'item_code':item.item_code,'parent':po_exists},'name')
 		if not item_exists:
@@ -361,7 +361,7 @@ def new_po(supplier,item,price_rate,sales_order, qty):
 					})
 
 	po.save(ignore_permissions=True)
-		
+
 #maintains sales orders which are used in process
 def update_used(sales_order):
 	if not frappe.db.get_value("Sales Order Used",{"sales_order":sales_order},"sales_order"):
@@ -377,7 +377,7 @@ def update_used(sales_order):
 #update qty if item in purchase order exists
 def update_qty(name,item,sales_order,price_rate, qty):
 	frappe.db.sql("""update `tabPurchase Order Item` set qty=qty+%s where parent='%s' and item_code='%s'"""%(qty,name,item.item_code))
-	
+
 #update purchase order with item
 def add_po_items(name,item,sales_order,price_rate, qty):
 	idx=frappe.db.sql("""select ifnull(max(idx),0)+1 as idx from `tabPurchase Order Item` where parent='%s'"""%(name),as_list=1)
@@ -402,15 +402,15 @@ def add_po_items(name,item,sales_order,price_rate, qty):
 	poi.parenttype='Purchase Order'
 	poi.parent=name
 	poi.save(ignore_permissions=True)
-	
+
 #to make oppurtunity from submitted sales order
 @frappe.whitelist()
 def make_oppurtunity(source_name, target_doc=None):
 	def set_missing_values(source, target):
 		target.ignore_pricing_rule = 1
 		target.run_method("set_missing_values")
-		
-	
+
+
 	target_doc = get_mapped_doc("Sales Order", source_name, {
 		"Sales Order": {
 			"doctype": "Opportunity",
@@ -425,10 +425,10 @@ def make_oppurtunity(source_name, target_doc=None):
 				"name": "prevdoc_detail_docname",
 				"parent": "against_sales_order",
 			},
-			
+
 		}
 	}, target_doc, set_missing_values)
-	
+
 	return target_doc
 
 def  update_item_price_rate_pi(doc,method):
@@ -437,8 +437,8 @@ def  update_item_price_rate_pi(doc,method):
 		if item.item_code:
 			rate=get_ec_rate(item.item_code)
 			if rate and (item.rate < rate):
-				frappe.db.sql("""update `tabItem Price` 
-					set price_list_rate=%s where item_code='%s' 
+				frappe.db.sql("""update `tabItem Price`
+					set price_list_rate=%s where item_code='%s'
 					and price_list='EC - Rate of Purchase'"""%(item.rate,item.item_code))
 
 def update_item_price_sq(doc,method):
@@ -446,18 +446,18 @@ def update_item_price_sq(doc,method):
 		rate=get_ec_rate(d.item_code)
 		if rate:
 			if d.rate < rate:
-				frappe.db.sql("""update `tabItem Price` 
-					set price_list_rate='%s' 
-					where price_list='EC - Rate of Purchase' 
+				frappe.db.sql("""update `tabItem Price`
+					set price_list_rate='%s'
+					where price_list='EC - Rate of Purchase'
 					and item_code='%s' """%(d.rate,d.item_code))
 				frappe.db.sql("commit")
-	
+
 def update_item_price_ip(doc,method):
 	rate= get_ec_rate(doc.item_code)
 	if rate:
 		if doc.price_list_rate < rate:
-			frappe.db.sql("""update `tabItem Price` 
-				set price_list_rate='%s' where price_list='EC - Rate of Purchase' 
+			frappe.db.sql("""update `tabItem Price`
+				set price_list_rate='%s' where price_list='EC - Rate of Purchase'
 				and item_code='%s' """%(doc.price_list_rate,doc.item_code))
 			frappe.db.sql("commit")
 		else:
@@ -471,29 +471,29 @@ def update_item_price_on_pi_cl(doc,method):
 		if item.item_code:
 			rate=get_rate(item.item_code)
 			if rate:
-				frappe.db.sql("""update `tabItem Price` 
-					set price_list_rate=%s 
-					where item_code='%s' 
+				frappe.db.sql("""update `tabItem Price`
+					set price_list_rate=%s
+					where item_code='%s'
 					and price_list='EC - Rate of Purchase'"""%(rate[0][0],item.item_code))
-			
+
 def update_item_price_on_sq_cl(doc,method):
 	for item in doc.get('item_list'):
 		if item.item_code:
 			rate=get_rate(item.item_code)
 			if rate:
-				frappe.db.sql("""update `tabItem Price` 
-					set price_list_rate=%s 
+				frappe.db.sql("""update `tabItem Price`
+					set price_list_rate=%s
 					where item_code='%s' and price_list='%s'"""%(rate[0][0],item.item_code,doc.buying_price_list))
 
 def get_rate(item_code):
 	return frappe.db.sql("""select least(
 		CASE WHEN item_rate = 0 THEN GREATEST(item_rate,quotation_rate,purchase_rate)+1 ELSE item_rate END,
 		CASE WHEN quotation_rate= 0 THEN GREATEST(item_rate,quotation_rate,purchase_rate)+1 ELSE quotation_rate END,
-		CASE WHEN purchase_rate = 0 THEN GREATEST(item_rate,quotation_rate,purchase_rate)+1 ELSE purchase_rate END) as rate from  (select 
+		CASE WHEN purchase_rate = 0 THEN GREATEST(item_rate,quotation_rate,purchase_rate)+1 ELSE purchase_rate END) as rate from  (select
 		ifnull(min(nullif(ip.price_list_rate,0)),0) as item_rate,
 		ifnull(min(nullif(sq.price_list_rate,0)),0) as quotation_rate,
-		ifnull(min(nullif(pi.price_list_rate,0)),0) as purchase_rate from `tabItem` im 
-		left join `tabItem Price` ip on ip.item_code=im.item_code 
+		ifnull(min(nullif(pi.price_list_rate,0)),0) as purchase_rate from `tabItem` im
+		left join `tabItem Price` ip on ip.item_code=im.item_code
 		left join `tabSupplier Quotation Item` sq on sq.item_code=im.item_code and sq.docstatus=1
 		left join `tabPurchase Invoice Item` pi on pi.item_code=im.item_code and pi.docstatus=1
 		where im.item_code='%s' group by im.item_code)x"""%(item_code),as_list=1)
@@ -515,13 +515,13 @@ def auto_create_self_item_entry(doc,method):
 		"item_name":doc.item_name,
 		"brand":doc.brand,
 		"item_group":doc.item_group
-        }) 		
+        })
 		doc.save()
 		frappe.db.commit()
 
 
 
-def create_eq_item_entry(doc,method):	
+def create_eq_item_entry(doc,method):
 	for row in doc.get('engine_compatibility_'):
 		result = frappe.db.sql(""" select name from `tabQuote Item` where parent='{0}' and  item_code='{1}' """.format(row.item_code,doc.item_code),as_list=1)
 		if not result:
@@ -531,7 +531,7 @@ def create_eq_item_entry(doc,method):
 			"item_name":doc.item_name,
 			"brand":doc.brand,
 			"item_group":doc.item_group
-            }) 		
+            })
 			item_doc.save()
 			frappe.db.commit()
 
@@ -544,11 +544,12 @@ def delete_eq_item_entry(doc,method):
 	if doc.deleted_eq_item:
 		deleted_eq_item = cstr(doc.deleted_eq_item).split(',')
 		for d in deleted_eq_item:
-			my_doc = frappe.get_doc('Item',d)
-			for row in my_doc.get('engine_compatibility_'):
-				if row.item_code == doc.item_code:
-					my_doc.get('engine_compatibility_').remove(row)
-			my_doc.save()
+			if d != doc.item_code:
+				my_doc = frappe.get_doc('Item',d)
+				for row in my_doc.get('engine_compatibility_'):
+					if row.item_code == doc.item_code:
+						my_doc.get('engine_compatibility_').remove(row)
+				my_doc.save()
 		doc.deleted_eq_item = ''
 
 @frappe.whitelist()
@@ -575,7 +576,7 @@ def get_alternative_item_details(doc):
 						   `tabBin` bi
 						on
 						   qi.item_code = bi.item_code  join `tabItem` ite
-						on   
+						on
 						   ite.item_code = bi.item_code
 						where
 						qi.parent='{0}'
@@ -589,13 +590,13 @@ def get_alternative_item_details(doc):
 def update_sales_item_name(doc,method):
 	for row in doc.get('items'):
 		row.sales_item_name = row.item_code
-		row.old_oem = row.current_oem	
+		row.old_oem = row.current_oem
 
 
 @frappe.whitelist()
 def get_roles_for_so_cancellation():
 	role_list = frappe.db.sql("select roles from `tabAssign Roles Permissions`",as_list=1)
-	return role_list		
+	return role_list
 
 
 @frappe.whitelist()
@@ -603,7 +604,7 @@ def custom_get_linked_docs(doctype, name, metadata_loaded=None):
 	results = get_linked_docs(doctype,name,metadata_loaded)
 	my_dict = make_unique(results)
 	cancel_linked_docs(my_dict,doctype,name)
-	return 0			
+	return 0
 
 
 
@@ -623,11 +624,11 @@ def cancel_linked_docs(my_dict,doctype,name):
 		for doc in ['Journal Voucher','Sales Invoice','Packing Slip','Delivery Note']:
 			if my_dict.get(doc):
 				if doc == 'Sales Invoice':
-					check_link_of_sales_invoice(doc,my_dict.get(doc))	
+					check_link_of_sales_invoice(doc,my_dict.get(doc))
 				for curr_name in my_dict.get(doc):
 					cancel_doc(doc,curr_name)
-	cancel_sales_order_self(doctype,name)				
-		
+	cancel_sales_order_self(doctype,name)
+
 def cancel_doc(doc,name):
 	my_doc = frappe.get_doc(doc,name)
 	my_doc.cancel()
@@ -643,13 +644,13 @@ def check_link_of_sales_invoice(doc,si_list):
 def cancel_jv(doc_name,jv_list):
 	for jv in jv_list:
 		my_doc = frappe.get_doc(doc_name,jv[0])
-		my_doc.cancel()				
+		my_doc.cancel()
 
 
 
 def cancel_sales_order_self(doctype,name):
 	my_doc = frappe.get_doc(doctype,name)
-	my_doc.cancel()	
+	my_doc.cancel()
 
 
 @frappe.whitelist()
