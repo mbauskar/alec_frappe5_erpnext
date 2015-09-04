@@ -232,7 +232,7 @@ $.extend(erpnext.item, {
 			args = d.get_values();
 			if(!args) return;
 			frappe.call({
-				method:"erpnext.stock.doctype.item.item.get_variant",
+				method:"erpnext.controllers.item_variant.get_variant",
 				args: {
 					"item": cur_frm.doc.name,
 					"args": d.get_values()
@@ -254,7 +254,7 @@ $.extend(erpnext.item, {
 					} else {
 						d.hide();
 						frappe.call({
-							method:"erpnext.stock.doctype.item.item.create_variant",
+							method:"erpnext.controllers.item_variant.create_variant",
 							args: {
 								"item": cur_frm.doc.name,
 								"args": d.get_values()

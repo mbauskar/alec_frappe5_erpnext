@@ -5,7 +5,7 @@ app_publisher = "Frappe Technologies Pvt. Ltd. and Contributors"
 app_description = "Open Source Enterprise Resource Planning for Small and Midsized Organizations"
 app_icon = "icon-th"
 app_color = "#e74c3c"
-app_version = "5.8.2"
+app_version = "6.0.1"
 github_link = "https://github.com/frappe/erpnext"
 
 error_report_email = "support@erpnext.com"
@@ -29,7 +29,7 @@ my_account_context = "erpnext.shopping_cart.utils.update_my_account_context"
 
 email_append_to = ["Job Applicant", "Opportunity", "Issue"]
 
-calendars = ["Task", "Production Order", "Time Log", "Leave Application"]
+calendars = ["Task", "Production Order", "Time Log", "Leave Application", "Sales Order"]
 
 website_generators = ["Item Group", "Item", "Sales Partner"]
 
