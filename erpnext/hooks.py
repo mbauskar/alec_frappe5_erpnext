@@ -33,8 +33,6 @@ calendars = ["Task", "Production Order", "Time Log", "Leave Application", "Sales
 
 website_generators = ["Item Group", "Item", "Sales Partner"]
 
-fixtures=["Custom Field","Property Setter"]
-
 website_context = {
 	"favicon": 	"/assets/erpnext/images/favicon.png",
 	"splash_image": "/assets/erpnext/images/splash.png"
