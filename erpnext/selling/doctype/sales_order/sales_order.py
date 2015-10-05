@@ -175,6 +175,10 @@ class SalesOrder(SellingController):
 		self.update_prevdoc_status('cancel')
 
 		frappe.db.set(self, 'status', 'Cancelled')
+		
+	def check_credit_limit(self):
+		from erpnext.selling.doctype.customer.customer import check_credit_limit
+		check_credit_limit(self.customer, self.company)
 
 	def check_nextdoc_docstatus(self):
 		# Checks Delivery Note
@@ -222,7 +226,7 @@ class SalesOrder(SellingController):
 		frappe.db.set(self, 'status', 'Stopped')
 		self.update_reserved_qty()
 		frappe.msgprint(_("{0} {1} status is Stopped").format(self.doctype, self.name))
-		self.notify_modified()
+		self.notify_update()
 		clear_doctype_notifications(self)
 
 	def unstop_sales_order(self):

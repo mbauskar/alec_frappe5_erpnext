@@ -42,13 +42,13 @@ frappe.pages["Accounts Browser"].on_page_load  = function(wrapper){
 		wrapper.page.add_menu_item(__('New Company'), function() { newdoc('Company'); }, true);
 	}
 
-	wrapper.page.set_secondary_action(__('Refresh'), function() {
+	wrapper.page.add_menu_item(__('Refresh'), function() {
 			wrapper.$company_select.change();
 		});
 
 	wrapper.page.set_primary_action(__('New'), function() {
 		erpnext.account_chart && erpnext.account_chart.make_new();
-	});
+	}, "octicon octicon-plus");
 
 	// company-select
 	wrapper.$company_select = wrapper.page.add_select("Company", [])
@@ -121,7 +121,8 @@ erpnext.AccountsChart = Class.extend({
 					label: __("Add Child"),
 					click: function() {
 						me.make_new()
-					}
+					},
+					btnClass: "hidden-xs"
 				},
 				{
 					condition: function(node) {
@@ -137,8 +138,8 @@ erpnext.AccountsChart = Class.extend({
 							"company": me.company
 						};
 						frappe.set_route("query-report", "General Ledger");
-					}
-
+					},
+					btnClass: "hidden-xs"
 				},
 				{
 					condition: function(node) { return !node.root && me.can_write },
@@ -147,7 +148,8 @@ erpnext.AccountsChart = Class.extend({
 						frappe.model.rename_doc(me.ctype, node.label, function(new_name) {
 							node.reload();
 						});
-					}
+					},
+					btnClass: "hidden-xs"
 				},
 				{
 					condition: function(node) { return !node.root && me.can_delete },
@@ -156,14 +158,15 @@ erpnext.AccountsChart = Class.extend({
 						frappe.model.delete_doc(me.ctype, node.label, function() {
 							node.parent.remove();
 						});
-					}
+					},
+					btnClass: "hidden-xs"
 				}
 			],
 			onrender: function(node) {
 				var dr_or_cr = node.data.balance < 0 ? "Cr" : "Dr";
 				if (me.ctype == 'Account' && node.data && node.data.balance!==undefined) {
 					$('<span class="balance-area pull-right text-muted small">'
-						+ format_currency(Math.abs(node.data.balance), node.data.currency)
+						+ format_currency(Math.abs(node.data.balance), node.data.account_currency)
 						+ " " + dr_or_cr
 						+ '</span>').insertBefore(node.$ul);
 				}
@@ -211,7 +214,8 @@ erpnext.AccountsChart = Class.extend({
 						'Income Account', 'Tax', 'Chargeable', 'Temporary'].join('\n'),
 					description: __("Optional. This setting will be used to filter in various transactions.") },
 				{fieldtype:'Float', fieldname:'tax_rate', label:__('Tax Rate')},
-				{fieldtype:'Link', fieldname:'warehouse', label:__('Warehouse'), options:"Warehouse"}
+				{fieldtype:'Link', fieldname:'warehouse', label:__('Warehouse'), options:"Warehouse"},
+				{fieldtype:'Link', fieldname:'account_currency', label:__('Currency'), options:"Currency"}
 			]
 		})
 

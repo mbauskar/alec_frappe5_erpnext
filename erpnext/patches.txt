@@ -201,3 +201,16 @@ execute:frappe.delete_doc_if_exists("Print Format", "Credit Note - Negative Invo
 
 # V6.0
 erpnext.patches.v6_0.set_default_title # 2015-09-03
+erpnext.patches.v6_0.default_activity_rate
+execute:frappe.db.set_value("Stock Settings", None, "automatically_set_serial_nos_based_on_fifo", 1)
+execute:frappe.db.sql("""update `tabProject` set percent_complete=round(percent_complete, 2) where percent_complete is not null""")
+erpnext.patches.v6_0.fix_outstanding_amount
+erpnext.patches.v6_0.fix_planned_qty
+erpnext.patches.v6_0.multi_currency
+erpnext.patches.v6_2.remove_newsletter_duplicates
+erpnext.patches.v6_2.fix_missing_default_taxes_and_lead
+erpnext.patches.v5_8.tax_rule
+erpnext.patches.v6_3.convert_applicable_territory
+erpnext.patches.v6_4.round_status_updater_percentages
+erpnext.patches.v6_4.repost_gle_for_journal_entries_where_reference_name_missing
+erpnext.patches.v6_4.fix_journal_entries_due_to_reconciliation

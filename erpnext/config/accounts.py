@@ -108,6 +108,11 @@ def get_data():
 				},
 				{
 					"type": "doctype",
+					"name": "Tax Rule",
+					"description": _("Tax Rule for transactions.")
+				},
+				{
+					"type": "doctype",
 					"name": "Sales Taxes and Charges Template",
 					"description": _("Tax template for selling transactions.")
 				},
@@ -179,6 +184,12 @@ def get_data():
 				{
 					"type": "report",
 					"name": "Trial Balance",
+					"doctype": "GL Entry",
+					"is_query_report": True,
+				},
+				{
+					"type": "report",
+					"name": "Trial Balance for Party",
 					"doctype": "GL Entry",
 					"is_query_report": True,
 				},

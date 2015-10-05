@@ -43,7 +43,7 @@
    "in_filter": 0,
    "in_list_view": 0,
    "label": "Title",
-   "no_copy": 0,
+   "no_copy": 1,
    "permlevel": 0,
    "precision": "",
    "print_hide": 0,
@@ -528,7 +528,7 @@
    "unique": 0
   },
   {
-   "allow_on_submit": 1,
+   "allow_on_submit": 0,
    "bold": 0,
    "collapsible": 0,
    "fieldname": "items",
@@ -1704,7 +1704,7 @@
    "unique": 0
   },
   {
-   "allow_on_submit": 1,
+   "allow_on_submit": 0,
    "bold": 0,
    "collapsible": 0,
    "fieldname": "supplied_items",
@@ -2032,7 +2032,7 @@
  "is_submittable": 1,
  "issingle": 0,
  "istable": 0,
- "modified": "2015-08-27 06:26:20.233037",
+ "modified": "2015-09-30 08:52:56.137185",
  "modified_by": "Administrator",
  "module": "Buying",
  "name": "Purchase Order",
@@ -2040,7 +2040,7 @@
  "permissions": [
   {
    "amend": 0,
-   "apply_user_permissions": 1,
+   "apply_user_permissions": 0,
    "cancel": 0,
    "create": 0,
    "delete": 0,
@@ -2080,7 +2080,7 @@
   },
   {
    "amend": 1,
-   "apply_user_permissions": 1,
+   "apply_user_permissions": 0,
    "cancel": 1,
    "create": 1,
    "delete": 1,
@@ -2100,7 +2100,7 @@
   },
   {
    "amend": 0,
-   "apply_user_permissions": 1,
+   "apply_user_permissions": 0,
    "cancel": 0,
    "create": 0,
    "delete": 0,

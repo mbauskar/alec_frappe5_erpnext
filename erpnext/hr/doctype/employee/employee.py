@@ -89,7 +89,7 @@ class Employee(Document):
 				user.user_image = self.image
 				try:
 					frappe.get_doc({
-						"doctype": "File Data",
+						"doctype": "File",
 						"file_name": self.image,
 						"attached_to_doctype": "User",
 						"attached_to_name": self.user_id
@@ -158,8 +158,13 @@ def get_retirement_date(date_of_birth=None):
 	import datetime
 	ret = {}
 	if date_of_birth:
-		dt = getdate(date_of_birth) + datetime.timedelta(21915)
-		ret = {'date_of_retirement': dt.strftime('%Y-%m-%d')}
+		try:
+			dt = getdate(date_of_birth) + datetime.timedelta(21915)
+			ret = {'date_of_retirement': dt.strftime('%Y-%m-%d')}
+		except ValueError:
+			# invalid date
+			ret = {}
+
 	return ret
 
 @frappe.whitelist()

@@ -7,9 +7,10 @@ from frappe.model.naming import make_autoname
 from frappe import _, msgprint, throw
 import frappe.defaults
 from frappe.utils import flt
-
+from frappe.desk.reportview import build_match_conditions
 from erpnext.utilities.transaction_base import TransactionBase
 from erpnext.utilities.address_and_contact import load_address_and_contact
+from erpnext.accounts.party import validate_party_accounts
 
 class Customer(TransactionBase):
 	def get_feed(self):
@@ -24,14 +25,14 @@ class Customer(TransactionBase):
 		if cust_master_name == 'Customer Name':
 			self.name = self.customer_name
 		else:
+			if not self.naming_series:
+				frappe.throw(_("Series is mandatory"), frappe.MandatoryError)
+
 			self.name = make_autoname(self.naming_series+'.#####')
 
-	def validate_values(self):
-		if frappe.defaults.get_global_default('cust_master_name') == 'Naming Series' and not self.naming_series:
-			frappe.throw(_("Series is mandatory"), frappe.MandatoryError)
-
 	def validate(self):
-		self.validate_values()
+		self.flags.is_new_doc = self.is_new()
+		validate_party_accounts(self)
 
 	def update_lead_status(self):
 		if self.lead_name:
@@ -72,7 +73,9 @@ class Customer(TransactionBase):
 		self.update_lead_status()
 		self.update_address()
 		self.update_contact()
-		self.create_lead_address_contact()
+
+		if self.flags.is_new_doc:
+			self.create_lead_address_contact()
 
 	def validate_name_with_customer_group(self):
 		if frappe.db.exists("Customer Group", self.name):
@@ -124,9 +127,11 @@ def get_dashboard_info(customer):
 		out[doctype] = frappe.db.get_value(doctype,
 			{"customer": customer, "docstatus": ["!=", 2] }, "count(*)")
 
-	billing_this_year = frappe.db.sql("""select sum(base_grand_total)
-		from `tabSales Invoice`
-		where customer=%s and docstatus = 1 and fiscal_year = %s""",
+	billing_this_year = frappe.db.sql("""
+		select sum(ifnull(debit_in_account_currency, 0)) - sum(ifnull(credit_in_account_currency, 0))
+		from `tabGL Entry`
+		where voucher_type='Sales Invoice' and party_type = 'Customer'
+			and party=%s and fiscal_year = %s""",
 		(customer, frappe.db.get_default("fiscal_year")))
 
 	total_unpaid = frappe.db.sql("""select sum(outstanding_amount)
@@ -135,7 +140,6 @@ def get_dashboard_info(customer):
 
 	out["billing_this_year"] = billing_this_year[0][0] if billing_this_year else 0
 	out["total_unpaid"] = total_unpaid[0][0] if total_unpaid else 0
-	out["company_currency"] = frappe.db.sql_list("select distinct default_currency from tabCompany")
 
 	return out
 
@@ -146,11 +150,16 @@ def get_customer_list(doctype, txt, searchfield, start, page_len, filters):
 	else:
 		fields = ["name", "customer_name", "customer_group", "territory"]
 
+	match_conditions = build_match_conditions("Customer")
+	match_conditions = "and {}".format(match_conditions) if match_conditions else ""
+
 	return frappe.db.sql("""select %s from `tabCustomer` where docstatus < 2
-		and (%s like %s or customer_name like %s) order by
+		and (%s like %s or customer_name like %s)
+		{match_conditions}
+		order by
 		case when name like %s then 0 else 1 end,
 		case when customer_name like %s then 0 else 1 end,
-		name, customer_name limit %s, %s""" %
+		name, customer_name limit %s, %s""".format(match_conditions=match_conditions) %
 		(", ".join(fields), searchfield, "%s", "%s", "%s", "%s", "%s", "%s"),
 		("%%%s%%" % txt, "%%%s%%" % txt, "%%%s%%" % txt, "%%%s%%" % txt, start, page_len))
 
@@ -186,27 +195,26 @@ def get_customer_outstanding(customer, company):
 	outstanding_based_on_so = flt(outstanding_based_on_so[0][0]) if outstanding_based_on_so else 0.0
 
 	# Outstanding based on Delivery Note
-	outstanding_based_on_dn = frappe.db.sql("""
-		select
-			sum(
-				(
-					(ifnull(dn_item.amount, 0) - ifnull((select sum(ifnull(amount, 0))
-						from `tabSales Invoice Item`
-						where ifnull(dn_detail, '') = dn_item.name and docstatus = 1), 0)
-					)/dn.base_net_total
-				)*dn.base_grand_total
-			)
+	unmarked_delivery_note_items = frappe.db.sql("""select
+			dn_item.name, dn_item.amount, dn.base_net_total, dn.base_grand_total
 		from `tabDelivery Note` dn, `tabDelivery Note Item` dn_item
 		where
-			dn.name = dn_item.parent and dn.customer=%s and dn.company=%s
+			dn.name = dn_item.parent
+			and dn.customer=%s and dn.company=%s
 			and dn.docstatus = 1 and dn.status != 'Stopped'
 			and ifnull(dn_item.against_sales_order, '') = ''
-			and ifnull(dn_item.against_sales_invoice, '') = ''
-			and ifnull(dn_item.amount, 0) > ifnull((select sum(ifnull(amount, 0))
-				from `tabSales Invoice Item`
-				where ifnull(dn_detail, '') = dn_item.name and docstatus = 1), 0)""", (customer, company))
+			and ifnull(dn_item.against_sales_invoice, '') = ''""", (customer, company), as_dict=True)
 
-	outstanding_based_on_dn = flt(outstanding_based_on_dn[0][0]) if outstanding_based_on_dn else 0.0
+	outstanding_based_on_dn = 0.0
+
+	for dn_item in unmarked_delivery_note_items:
+		si_amount = frappe.db.sql("""select sum(ifnull(amount, 0))
+			from `tabSales Invoice Item`
+			where dn_detail = %s and docstatus = 1""", dn_item.name)[0][0]
+
+		if flt(dn_item.amount) > flt(si_amount):
+			outstanding_based_on_dn += ((flt(dn_item.amount) - flt(si_amount)) \
+				/ dn_item.base_net_total) * dn_item.base_grand_total
 
 	return outstanding_based_on_gle + outstanding_based_on_so + outstanding_based_on_dn
 

@@ -207,10 +207,10 @@ class StatusUpdater(Document):
 			# update percent complete in the parent table
 			if args.get('target_parent_field'):
 				frappe.db.sql("""update `tab%(target_parent_dt)s`
-					set %(target_parent_field)s = (select sum(if(%(target_ref_field)s >
+					set %(target_parent_field)s = round((select sum(if(%(target_ref_field)s >
 						ifnull(%(target_field)s, 0), %(target_field)s,
 						%(target_ref_field)s))/sum(%(target_ref_field)s)*100
-						from `tab%(target_dt)s` where parent="%(name)s") %(set_modified)s
+						from `tab%(target_dt)s` where parent="%(name)s"), 2) %(set_modified)s
 					where name='%(name)s'""" % args)
 
 			# update field
@@ -222,7 +222,7 @@ class StatusUpdater(Document):
 					where name='%(name)s'""" % args)
 
 			if args.get("set_modified"):
-				frappe.get_doc(args["target_parent_dt"], name).notify_modified()
+				frappe.get_doc(args["target_parent_dt"], name).notify_update()
 
 	def update_billing_status_for_zero_amount_refdoc(self, ref_dt):
 		ref_fieldname = ref_dt.lower().replace(" ", "_")

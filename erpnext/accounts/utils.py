@@ -9,6 +9,9 @@ from frappe import throw, _
 from frappe.utils import formatdate
 import frappe.desk.reportview
 
+# imported to enable erpnext.accounts.utils.get_account_currency
+from erpnext.accounts.doctype.account.account import get_account_currency
+
 class FiscalYearError(frappe.ValidationError): pass
 class BudgetError(frappe.ValidationError): pass
 
@@ -50,7 +53,7 @@ def validate_fiscal_year(date, fiscal_year, label=_("Date"), doc=None):
 			throw(_("{0} '{1}' not in Fiscal Year {2}").format(label, formatdate(date), fiscal_year))
 
 @frappe.whitelist()
-def get_balance_on(account=None, date=None, party_type=None, party=None):
+def get_balance_on(account=None, date=None, party_type=None, party=None, in_account_currency=True):
 	if not account and frappe.form_dict.get("account"):
 		account = frappe.form_dict.get("account")
 	if not date and frappe.form_dict.get("date"):
@@ -94,18 +97,27 @@ def get_balance_on(account=None, date=None, party_type=None, party=None):
 				select name from `tabAccount` ac where ac.name = gle.account
 				and ac.lft >= %s and ac.rgt <= %s
 			)""" % (acc.lft, acc.rgt))
+
+			# If group and currency same as company,
+			# always return balance based on debit and credit in company currency
+			if acc.account_currency == frappe.db.get_value("Company", acc.company, "default_currency"):
+				in_account_currency = False
 		else:
 			cond.append("""gle.account = "%s" """ % (account.replace('"', '\\"'), ))
 
 	if party_type and party:
 		cond.append("""gle.party_type = "%s" and gle.party = "%s" """ %
 			(party_type.replace('"', '\\"'), party.replace('"', '\\"')))
-			
+
 	if account or (party_type and party):
+		if in_account_currency:
+			select_field = "sum(ifnull(debit_in_account_currency, 0)) - sum(ifnull(credit_in_account_currency, 0))"
+		else:
+			select_field = "sum(ifnull(debit, 0)) - sum(ifnull(credit, 0))"
 		bal = frappe.db.sql("""
-			SELECT sum(ifnull(debit, 0)) - sum(ifnull(credit, 0))
+			SELECT {0}
 			FROM `tabGL Entry` gle
-			WHERE %s""" % " and ".join(cond))[0][0]
+			WHERE {1}""".format(select_field, " and ".join(cond)))[0][0]
 
 		# if bal is None, return 0
 		return flt(bal)
@@ -186,6 +198,8 @@ def update_against_doc(d, jv_obj):
 	"""
 	jv_detail = jv_obj.get("accounts", {"name": d["voucher_detail_no"]})[0]
 	jv_detail.set(d["dr_or_cr"], d["allocated_amt"])
+	jv_detail.set('debit' if d['dr_or_cr']=='debit_in_account_currency' else 'credit', 
+		d["allocated_amt"]*flt(jv_detail.exchange_rate))
 
 	original_reference_type = jv_detail.reference_type
 	original_reference_name = jv_detail.reference_name
@@ -194,21 +208,35 @@ def update_against_doc(d, jv_obj):
 	jv_detail.set("reference_name", d["against_voucher"])
 
 	if d['allocated_amt'] < d['unadjusted_amt']:
-		jvd = frappe.db.sql("""select cost_center, balance, against_account, is_advance
-			from `tabJournal Entry Account` where name = %s""", d['voucher_detail_no'])
+		jvd = frappe.db.sql("""
+			select cost_center, balance, against_account, is_advance, account_type, exchange_rate
+			from `tabJournal Entry Account` where name = %s
+		""", d['voucher_detail_no'], as_dict=True)
+		
+		amount_in_account_currency = flt(d['unadjusted_amt']) - flt(d['allocated_amt'])
+		amount_in_company_currency = amount_in_account_currency * flt(jvd[0]['exchange_rate'])
+
 		# new entry with balance amount
 		ch = jv_obj.append("accounts")
 		ch.account = d['account']
+		ch.account_type = jvd[0]['account_type']
+		ch.exchange_rate = jvd[0]['exchange_rate']
 		ch.party_type = d["party_type"]
 		ch.party = d["party"]
-		ch.cost_center = cstr(jvd[0][0])
-		ch.balance = flt(jvd[0][1])
-		ch.set(d['dr_or_cr'], flt(d['unadjusted_amt']) - flt(d['allocated_amt']))
-		ch.set(d['dr_or_cr']== 'debit' and 'credit' or 'debit', 0)
-		ch.against_account = cstr(jvd[0][2])
+		ch.cost_center = cstr(jvd[0]["cost_center"])
+		ch.balance = flt(jvd[0]["balance"])
+		
+		ch.set(d['dr_or_cr'], amount_in_account_currency)
+		ch.set('debit' if d['dr_or_cr']=='debit_in_account_currency' else 'credit', amount_in_company_currency)
+		
+		ch.set('credit_in_account_currency' if d['dr_or_cr']== 'debit_in_account_currency' 
+			else 'debit_in_account_currency', 0)
+		ch.set('credit' if d['dr_or_cr']== 'debit_in_account_currency' else 'debit', 0)
+		
+		ch.against_account = cstr(jvd[0]["against_account"])
 		ch.reference_type = original_reference_type
 		ch.reference_name = original_reference_name
-		ch.is_advance = cstr(jvd[0][3])
+		ch.is_advance = cstr(jvd[0]["is_advance"])
 		ch.docstatus = 1
 
 	# will work as update after submit
@@ -272,7 +300,7 @@ def get_stock_and_account_difference(account_list=None, posting_date=None):
 		and name in (%s)""" % ', '.join(['%s']*len(account_list)), account_list))
 
 	for account, warehouse in account_warehouse.items():
-		account_balance = get_balance_on(account, posting_date)
+		account_balance = get_balance_on(account, posting_date, in_account_currency=False)
 		stock_value = get_stock_value_on(warehouse, posting_date)
 		if abs(flt(stock_value) - flt(account_balance)) > 0.005:
 			difference.setdefault(account, flt(stock_value) - flt(account_balance))
@@ -378,7 +406,7 @@ def get_stock_rbnb_difference(posting_date, company):
 
 	# Balance as per system
 	stock_rbnb_account = "Stock Received But Not Billed - " + frappe.db.get_value("Company", company, "abbr")
-	sys_bal = get_balance_on(stock_rbnb_account, posting_date)
+	sys_bal = get_balance_on(stock_rbnb_account, posting_date, in_account_currency=False)
 
 	# Amount should be credited
 	return flt(stock_rbnb) + flt(sys_bal)
@@ -393,6 +421,11 @@ def get_outstanding_invoices(amount_query, account, party_type, party):
 			`tabGL Entry`
 		where
 			account = %s and party_type=%s and party=%s and {amount_query} > 0
+			and (CASE
+					WHEN voucher_type = 'Journal Entry'
+					THEN ifnull(against_voucher, '') = ''
+					ELSE 1=1
+				END)
 		group by voucher_type, voucher_no
 		""".format(amount_query = amount_query), (account, party_type, party), as_dict = True)
 

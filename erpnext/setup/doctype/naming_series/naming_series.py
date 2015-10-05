@@ -69,12 +69,13 @@ class NamingSeries(Document):
 
 		# update in property setter
 		prop_dict = {'options': "\n".join(options), 'default': default}
+
 		for prop in prop_dict:
-			ps_exists = frappe.db.sql("""SELECT name FROM `tabProperty Setter`
-					WHERE doc_type = %s AND field_name = 'naming_series'
-					AND property = %s""", (doctype, prop))
+			ps_exists = frappe.db.get_value("Property Setter",
+				{"field_name": 'naming_series', 'doc_type': doctype, 'property': prop})
+
 			if ps_exists:
-				ps = frappe.get_doc('Property Setter', ps_exists[0][0])
+				ps = frappe.get_doc('Property Setter', ps_exists)
 				ps.value = prop_dict[prop]
 				ps.save()
 			else:
@@ -181,6 +182,9 @@ def get_default_naming_series(doctype):
 	naming_series = frappe.get_meta(doctype).get_field("naming_series").options or ""
 	naming_series = naming_series.split("\n")
 	out = naming_series[0] or (naming_series[1] if len(naming_series) > 1 else None)
-	if out:
+
+	if not out:
 		frappe.throw(_("Please set Naming Series for {0} via Setup > Settings > Naming Series").format(doctype),
 			NamingSeriesNotSetError)
+	else:
+		return out

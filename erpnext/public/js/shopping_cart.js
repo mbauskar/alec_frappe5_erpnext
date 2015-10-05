@@ -17,7 +17,7 @@ $(function() {
 
 $.extend(shopping_cart, {
 	update_cart: function(opts) {
-		if(!full_name) {
+		if(!full_name || full_name==="Guest") {
 			if(localStorage) {
 				localStorage.setItem("last_visited", window.location.pathname);
 				localStorage.setItem("pending_add_to_cart", opts.item_code);
@@ -30,7 +30,7 @@ $.extend(shopping_cart, {
 				args: {
 					item_code: opts.item_code,
 					qty: opts.qty,
-					with_doc: opts.with_doc || 0
+					with_items: opts.with_items || 0
 				},
 				btn: opts.btn,
 				callback: function(r) {

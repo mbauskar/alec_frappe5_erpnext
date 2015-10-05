@@ -7,7 +7,7 @@
  "description": "Specify Exchange Rate to convert one currency into another", 
  "docstatus": 0, 
  "doctype": "DocType", 
- "document_type": "Master", 
+ "document_type": "Setup", 
  "fields": [
   {
    "allow_on_submit": 0, 
@@ -85,7 +85,7 @@
  "is_submittable": 0, 
  "issingle": 0, 
  "istable": 0, 
- "modified": "2015-03-23 14:45:09.645344", 
+ "modified": "2015-09-14 02:55:55.160748", 
  "modified_by": "Administrator", 
  "module": "Setup", 
  "name": "Currency Exchange", 
@@ -113,7 +113,7 @@
   }, 
   {
    "amend": 0, 
-   "apply_user_permissions": 1, 
+   "apply_user_permissions": 0, 
    "cancel": 0, 
    "create": 0, 
    "delete": 0, 
@@ -133,7 +133,7 @@
   }, 
   {
    "amend": 0, 
-   "apply_user_permissions": 1, 
+   "apply_user_permissions": 0, 
    "cancel": 0, 
    "create": 0, 
    "delete": 0, 
@@ -153,7 +153,7 @@
   }, 
   {
    "amend": 0, 
-   "apply_user_permissions": 1, 
+   "apply_user_permissions": 0, 
    "cancel": 0, 
    "create": 0, 
    "delete": 0, 

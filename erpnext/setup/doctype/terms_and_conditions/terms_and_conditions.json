@@ -8,7 +8,7 @@
  "description": "Standard Terms and Conditions that can be added to Sales and Purchases.\n\nExamples:\n\n1. Validity of the offer.\n1. Payment Terms (In Advance, On Credit, part advance etc).\n1. What is extra (or payable by the Customer).\n1. Safety / usage warning.\n1. Warranty if any.\n1. Returns Policy.\n1. Terms of shipping, if applicable.\n1. Ways of addressing disputes, indemnity, liability, etc.\n1. Address and Contact of your Company.", 
  "docstatus": 0, 
  "doctype": "DocType", 
- "document_type": "Master", 
+ "document_type": "Setup", 
  "fields": [
   {
    "allow_on_submit": 0, 
@@ -21,7 +21,7 @@
    "in_filter": 1, 
    "in_list_view": 0, 
    "label": "Title", 
-   "no_copy": 0, 
+   "no_copy": 1, 
    "oldfieldname": "title", 
    "oldfieldtype": "Data", 
    "permlevel": 0, 
@@ -66,7 +66,7 @@
  "is_submittable": 0, 
  "issingle": 0, 
  "istable": 0, 
- "modified": "2015-07-13 05:28:25.035649", 
+ "modified": "2015-09-11 12:19:53.267342", 
  "modified_by": "Administrator", 
  "module": "Setup", 
  "name": "Terms and Conditions", 
@@ -94,7 +94,7 @@
   }, 
   {
    "amend": 0, 
-   "apply_user_permissions": 1, 
+   "apply_user_permissions": 0, 
    "cancel": 0, 
    "create": 0, 
    "delete": 0, 
@@ -114,7 +114,7 @@
   }, 
   {
    "amend": 0, 
-   "apply_user_permissions": 1, 
+   "apply_user_permissions": 0, 
    "cancel": 0, 
    "create": 0, 
    "delete": 0, 
@@ -154,7 +154,7 @@
   }, 
   {
    "amend": 0, 
-   "apply_user_permissions": 1, 
+   "apply_user_permissions": 0, 
    "cancel": 0, 
    "create": 1, 
    "delete": 1, 
@@ -174,7 +174,7 @@
   }, 
   {
    "amend": 0, 
-   "apply_user_permissions": 1, 
+   "apply_user_permissions": 0, 
    "cancel": 0, 
    "create": 0, 
    "delete": 0, 

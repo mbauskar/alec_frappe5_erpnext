@@ -177,9 +177,9 @@ def install(country=None):
 		{'doctype': "Print Heading", 'print_heading': _("Debit Note")}
 	]
 
-	from erpnext.setup.page.setup_wizard.fixtures import industry_type
-	records += [{"doctype":"Industry Type", "industry": d} for d in industry_type.items]
-	# records += [{"doctype":"Operation", "operation": d} for d in operations.items]
+	from erpnext.setup.page.setup_wizard.fixtures.industry_type import get_industry_types
+	records += [{"doctype":"Industry Type", "industry": d} for d in get_industry_types()]
+	# records += [{"doctype":"Operation", "operation": d} for d in get_operations()]
 
 	from frappe.modules import scrub
 	for r in records:
@@ -190,4 +190,14 @@ def install(country=None):
 		parent_link_field = ("parent_" + scrub(doc.doctype))
 		if doc.meta.get_field(parent_link_field) and not doc.get(parent_link_field):
 			doc.flags.ignore_mandatory = True
-		doc.insert(ignore_permissions=True)
+
+		try:
+			doc.insert(ignore_permissions=True)
+		except frappe.DuplicateEntryError, e:
+			# pass DuplicateEntryError and continue
+			if e.args and e.args[0]==doc.doctype and e.args[1]==doc.name:
+				# make sure DuplicateEntryError is for the exact same doc and not a related doc
+				pass
+			else:
+				raise
+

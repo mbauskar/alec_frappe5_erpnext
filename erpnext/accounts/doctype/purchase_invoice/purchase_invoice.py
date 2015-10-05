@@ -10,6 +10,7 @@ import frappe.defaults
 
 from erpnext.controllers.buying_controller import BuyingController
 from erpnext.accounts.party import get_party_account, get_due_date
+from erpnext.accounts.utils import get_account_currency
 
 form_grid_templates = {
 	"items": "templates/form_grid/item_grid.html"
@@ -66,7 +67,7 @@ class PurchaseInvoice(BuyingController):
 
 	def set_missing_values(self, for_validate=False):
 		if not self.credit_to:
-			self.credit_to = get_party_account(self.company, self.supplier, "Supplier")
+			self.credit_to = get_party_account("Supplier", self.supplier, self.company)
 		if not self.due_date:
 			self.due_date = get_due_date(self.posting_date, "Supplier", self.supplier, self.company)
 
@@ -91,13 +92,16 @@ class PurchaseInvoice(BuyingController):
 			throw(_("Conversion rate cannot be 0 or 1"))
 
 	def validate_credit_to_acc(self):
-		account = frappe.db.get_value("Account", self.credit_to, ["account_type", "report_type"], as_dict=True)
+		account = frappe.db.get_value("Account", self.credit_to,
+			["account_type", "report_type", "account_currency"], as_dict=True)
 
 		if account.report_type != "Balance Sheet":
 			frappe.throw(_("Credit To account must be a Balance Sheet account"))
 
 		if self.supplier and account.account_type != "Payable":
 			frappe.throw(_("Credit To account must be a Payable account"))
+
+		self.party_account_currency = account.account_currency
 
 	def check_for_stopped_status(self):
 		check_list = []
@@ -213,7 +217,7 @@ class PurchaseInvoice(BuyingController):
 					'party_type': 'Supplier',
 					'party': self.supplier,
 					'is_advance' : 'Yes',
-					'dr_or_cr' : 'debit',
+					'dr_or_cr' : 'debit_in_account_currency',
 					'unadjusted_amt' : flt(d.advance_amount),
 					'allocated_amt' : flt(d.allocated_amount)
 				}
@@ -257,26 +261,32 @@ class PurchaseInvoice(BuyingController):
 					"party_type": "Supplier",
 					"party": self.supplier,
 					"against": self.against_expense_account,
-					"credit": self.total_amount_to_pay,
-					"remarks": self.remarks,
+					"credit": self.base_grand_total,
+					"credit_in_account_currency": self.base_grand_total \
+						if self.party_account_currency==self.company_currency else self.grand_total,
 					"against_voucher": self.return_against if cint(self.is_return) else self.name,
 					"against_voucher_type": self.doctype,
-				})
+				}, self.party_account_currency)
 			)
 
 		# tax table gl entries
 		valuation_tax = {}
 		for tax in self.get("taxes"):
 			if tax.category in ("Total", "Valuation and Total") and flt(tax.base_tax_amount_after_discount_amount):
+				account_currency = get_account_currency(tax.account_head)
+
+				dr_or_cr = "debit" if tax.add_deduct_tax == "Add" else "credit"
+
 				gl_entries.append(
 					self.get_gl_dict({
 						"account": tax.account_head,
 						"against": self.supplier,
-						"debit": tax.add_deduct_tax == "Add" and tax.base_tax_amount_after_discount_amount or 0,
-						"credit": tax.add_deduct_tax == "Deduct" and tax.base_tax_amount_after_discount_amount or 0,
-						"remarks": self.remarks,
+						dr_or_cr: tax.base_tax_amount_after_discount_amount,
+						dr_or_cr + "_in_account_currency": tax.base_tax_amount_after_discount_amount \
+							if account_currency==self.company_currency \
+							else tax.tax_amount_after_discount_amount,
 						"cost_center": tax.cost_center
-					})
+					}, account_currency)
 				)
 
 			# accumulate valuation tax
@@ -292,14 +302,16 @@ class PurchaseInvoice(BuyingController):
 		stock_items = self.get_stock_items()
 		for item in self.get("items"):
 			if flt(item.base_net_amount):
+				account_currency = get_account_currency(item.expense_account)
 				gl_entries.append(
 					self.get_gl_dict({
 						"account": item.expense_account,
 						"against": self.supplier,
 						"debit": item.base_net_amount,
-						"remarks": self.remarks,
+						"debit_in_account_currency": item.base_net_amount \
+							if account_currency==self.company_currency else item.net_amount,
 						"cost_center": item.cost_center
-					})
+					}, account_currency)
 				)
 
 			if auto_accounting_for_stock and self.is_opening == "No" and \
@@ -352,12 +364,28 @@ class PurchaseInvoice(BuyingController):
 		# writeoff account includes petty difference in the invoice amount
 		# and the amount that is paid
 		if self.write_off_account and flt(self.write_off_amount):
+			write_off_account_currency = get_account_currency(self.write_off_account)
+
+			gl_entries.append(
+				self.get_gl_dict({
+					"account": self.credit_to,
+					"party_type": "Supplier",
+					"party": self.supplier,
+					"against": self.write_off_account,
+					"debit": self.base_write_off_amount,
+					"debit_in_account_currency": self.base_write_off_amount \
+						if self.party_account_currency==self.company_currency else self.write_off_amount,
+					"against_voucher": self.return_against if cint(self.is_return) else self.name,
+					"against_voucher_type": self.doctype,
+				}, self.party_account_currency)
+			)
 			gl_entries.append(
 				self.get_gl_dict({
 					"account": self.write_off_account,
 					"against": self.supplier,
-					"credit": flt(self.write_off_amount),
-					"remarks": self.remarks,
+					"credit": flt(self.base_write_off_amount),
+					"credit_in_account_currency": self.base_write_off_amount \
+						if write_off_account_currency==self.company_currency else self.write_off_amount,
 					"cost_center": self.write_off_cost_center
 				})
 			)

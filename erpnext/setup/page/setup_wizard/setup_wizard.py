@@ -15,6 +15,7 @@ from .default_website import website_maker
 import install_fixtures
 from .sample_data import make_sample_data
 from erpnext.accounts.utils import FiscalYearError
+from erpnext.accounts.doctype.account.account import RootNotEditable
 
 @frappe.whitelist()
 def setup_account(args=None):
@@ -91,8 +92,10 @@ def setup_account(args=None):
 		if args.get("add_sample_data"):
 			try:
 				make_sample_data()
+				frappe.clear_cache()
 			except FiscalYearError:
 				pass
+
 	except:
 		if args:
 			traceback = frappe.get_traceback()
@@ -109,7 +112,8 @@ def setup_account(args=None):
 def update_user_name(args):
 	if args.get("email"):
 		args['name'] = args.get("email")
-		frappe.flags.mute_emails = True
+
+		_mute_emails, frappe.flags.mute_emails = frappe.flags.mute_emails, True
 		doc = frappe.get_doc({
 			"doctype":"User",
 			"email": args.get("email"),
@@ -118,7 +122,7 @@ def update_user_name(args):
 		})
 		doc.flags.no_welcome_mail = True
 		doc.insert()
-		frappe.flags.mute_emails = False
+		frappe.flags.mute_emails = _mute_emails
 		from frappe.auth import _update_password
 		_update_password(args.get("email"), args.get("password"))
 
@@ -172,10 +176,7 @@ def create_price_lists(args):
 			"enabled": 1,
 			"buying": 1 if pl_type == "Buying" else 0,
 			"selling": 1 if pl_type == "Selling" else 0,
-			"currency": args["currency"],
-			"territories": [{
-				"territory": get_root_of("Territory")
-			}]
+			"currency": args["currency"]
 		}).insert()
 
 def set_defaults(args):
@@ -223,6 +224,7 @@ def set_defaults(args):
 	stock_settings.stock_uom = _("Nos")
 	stock_settings.auto_indent = 1
 	stock_settings.auto_insert_price_list_rate_if_missing = 1
+	stock_settings.automatically_set_serial_nos_based_on_fifo = 1
 	stock_settings.save()
 
 	selling_settings = frappe.get_doc("Selling Settings")
@@ -301,6 +303,7 @@ def get_fy_details(fy_start_date, fy_end_date):
 	return fy
 
 def create_taxes(args):
+
 	for i in xrange(1,6):
 		if args.get("tax_" + str(i)):
 			# replace % in case someone also enters the % symbol
@@ -318,6 +321,9 @@ def create_taxes(args):
 					pass
 				else:
 					raise
+			except RootNotEditable, e:
+				pass
+
 def make_tax_head(args, i, tax_group, tax_rate):
 	return frappe.get_doc({
 		"doctype":"Account",

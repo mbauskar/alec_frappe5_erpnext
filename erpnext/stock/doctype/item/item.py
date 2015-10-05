@@ -19,6 +19,7 @@ class Item(WebsiteGenerator):
 		condition_field = "show_in_website",
 		template = "templates/generators/item.html",
 		parent_website_route_field = "item_group",
+		no_cache = 1
 	)
 
 	def onload(self):
@@ -341,10 +342,10 @@ class Item(WebsiteGenerator):
 					frappe.throw(_("Please specify Attribute Value for attribute {0}").format(d.attribute))
 				args[d.attribute] = d.attribute_value
 
-			if self.get("__islocal"):
+			if self.variant_of:
 				# test this during insert because naming is based on item_code and we cannot use condition like self.name != variant
 				variant = get_variant(self.variant_of, args)
-				if variant:
+				if variant and self.get("__islocal"):
 					frappe.throw(_("Item variant {0} exists with same attributes").format(variant), ItemVariantExistsError)
 
 def validate_end_of_life(item_code, end_of_life=None, verbose=1):
